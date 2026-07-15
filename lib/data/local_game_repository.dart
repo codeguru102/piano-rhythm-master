@@ -13,6 +13,7 @@ import 'seed_songs.dart';
 class LocalGameRepository implements GameRepository {
   static const _kProfile = 'prm_profile';
   static const _kScores = 'prm_scores';
+  static const _kCustomSongs = 'prm_custom_songs';
 
   late final SharedPreferences _prefs;
 
@@ -22,7 +23,32 @@ class LocalGameRepository implements GameRepository {
   }
 
   @override
-  Future<List<Song>> fetchSongs() async => kSeedSongs;
+  Future<List<Song>> fetchSongs() async => [..._customSongs(), ...kSeedSongs];
+
+  List<Song> _customSongs() {
+    final raw = _prefs.getString(_kCustomSongs);
+    if (raw == null) return [];
+    try {
+      return (jsonDecode(raw) as List)
+          .map((e) => Song.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> saveCustomSong(Song song) async {
+    final list = _customSongs()
+      ..removeWhere((s) => s.id == song.id)
+      ..insert(0, song);
+    // Keep the newest 50 generated songs.
+    final trimmed = list.take(50).toList();
+    await _prefs.setString(
+      _kCustomSongs,
+      jsonEncode(trimmed.map((e) => e.toJson()).toList()),
+    );
+  }
 
   @override
   Future<UserProfile> loadProfile() async {

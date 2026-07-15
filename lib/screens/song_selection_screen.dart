@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/gradient_text.dart';
 import '../widgets/song_card.dart';
+import 'create_song_screen.dart';
 import 'game_screen.dart';
 
 /// "Choose Your Song" — search, category filters, and song cards.
@@ -41,6 +42,17 @@ class _SongSelectionScreenState extends State<SongSelectionScreen> {
   void initState() {
     super.initState();
     _songsFuture = context.read<GameRepository>().fetchSongs();
+  }
+
+  void _refresh() {
+    setState(() {
+      _songsFuture = context.read<GameRepository>().fetchSongs();
+    });
+  }
+
+  Future<void> _openCreate() async {
+    await Navigator.of(context).push(AppRoutes.fadeSlide(const CreateSongScreen()));
+    if (mounted) _refresh(); // show any newly generated song
   }
 
   bool _matches(Song s, ProfileProvider profile) {
@@ -76,15 +88,20 @@ class _SongSelectionScreenState extends State<SongSelectionScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 14, 20, 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: GradientText(
-                    'Choose Your Song',
-                    gradient: AppGradients.aurora,
-                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.w600),
-                  ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: GradientText(
+                        'Choose Your Song',
+                        gradient: AppGradients.aurora,
+                        style:
+                            TextStyle(fontSize: 25, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    _createButton(),
+                  ],
                 ),
               ),
               _searchField(),
@@ -124,6 +141,34 @@ class _SongSelectionScreenState extends State<SongSelectionScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _createButton() {
+    return GestureDetector(
+      onTap: _openCreate,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          gradient: AppGradients.primary,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          boxShadow: glow(AppColors.neonPurple, blur: 14, opacity: 0.5),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
+            SizedBox(width: 6),
+            Text(
+              'Create',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
       ),
     );

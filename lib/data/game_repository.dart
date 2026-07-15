@@ -14,6 +14,9 @@ abstract class GameRepository {
   // Songs collection
   Future<List<Song>> fetchSongs();
 
+  /// Persist a user-generated song so it appears in the library.
+  Future<void> saveCustomSong(Song song);
+
   // Users collection
   Future<UserProfile> loadProfile();
   Future<void> saveProfile(UserProfile profile);
