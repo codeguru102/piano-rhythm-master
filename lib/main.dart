@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
-import 'data/local_game_repository.dart';
+import 'data/db_init.dart';
+import 'data/sqlite_game_repository.dart';
 import 'services/audio_service.dart';
 
 Future<void> main() async {
@@ -13,7 +14,9 @@ Future<void> main() async {
   final audio = AudioService();
   await audio.init();
 
-  final repo = LocalGameRepository();
+  // Real on-device database (SQLite via sqflite) for profile / scores / songs.
+  await initDatabaseFactory();
+  final repo = SqliteGameRepository();
   await repo.init();
 
   runApp(PianoRhythmApp(prefs: prefs, audio: audio, repo: repo));
