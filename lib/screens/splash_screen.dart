@@ -5,14 +5,11 @@ import '../app.dart';
 import '../data/seed_songs.dart';
 import '../models/score_result.dart';
 import '../theme/app_theme.dart';
-import '../widgets/gradient_background.dart';
-import '../widgets/gradient_text.dart';
-import '../widgets/piano_muse.dart';
 import 'game_screen.dart';
 import 'main_shell.dart';
 import 'result_screen.dart';
 
-/// Brand intro: animated glowing logo, app name, loading, then Home.
+/// Brand intro: full-bleed hero artwork with a slow zoom, then Home.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -30,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _routeForShot(shot));
       return;
     }
-    Future.delayed(const Duration(milliseconds: 2600), () {
+    Future.delayed(const Duration(milliseconds: 2800), () {
       if (!mounted) return;
       Navigator.of(context)
           .pushReplacement(AppRoutes.scaleFade(const MainShell()));
@@ -71,49 +68,69 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GradientBackground(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const PianoMuse(size: 208)
-                  .animate()
-                  .scale(
-                    duration: 800.ms,
-                    curve: Curves.easeOutBack,
-                    begin: const Offset(0.5, 0.5),
-                    end: const Offset(1, 1),
-                  )
-                  .fadeIn(duration: 600.ms),
-              const SizedBox(height: AppSpace.md),
-              const GradientText(
-                'Piano Rhythm Master',
-                textAlign: TextAlign.center,
-                gradient: AppGradients.aurora,
-                style: TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+      backgroundColor: AppColors.bg,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Hero artwork, filling the screen with a slow "Ken Burns" zoom.
+          Image.asset(
+            'assets/images/splash.jpg',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          )
+              .animate()
+              .fadeIn(duration: 700.ms)
+              .scale(
+                begin: const Offset(1.08, 1.08),
+                end: const Offset(1, 1),
+                duration: 2800.ms,
+                curve: Curves.easeOut,
+              ),
+
+          // Bottom scrim so the loader reads over the bright art.
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: SizedBox(
+              height: 240,
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xCC07060D)],
+                  ),
                 ),
-              )
-                  .animate()
-                  .fadeIn(delay: 400.ms, duration: 700.ms)
-                  .slideY(begin: 0.4, end: 0, curve: Curves.easeOut)
-                  .then()
-                  .shimmer(duration: 1600.ms, color: Colors.white),
-              const SizedBox(height: 6),
-              const Text(
-                'Tap. Time. Triumph.',
-                style: TextStyle(color: AppColors.textMid, fontSize: 14),
-              ).animate().fadeIn(delay: 800.ms, duration: 700.ms),
-              const SizedBox(height: AppSpace.xl),
-              const SizedBox(
-                width: 130,
-                child: _LoadingBar(),
-              ).animate().fadeIn(delay: 900.ms),
-            ],
+              ),
+            ),
           ),
-        ),
+
+          // Loading indicator near the bottom.
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 44),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(width: 150, child: _LoadingBar()),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Loading your studio…',
+                    style: TextStyle(
+                      color: AppColors.textHi,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      shadows: const [
+                        Shadow(color: Colors.black, blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: 900.ms, duration: 600.ms),
+        ],
       ),
     );
   }
@@ -128,15 +145,16 @@ class _LoadingBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadii.pill),
       child: Container(
         height: 5,
-        color: AppColors.panelHi,
+        color: Colors.white.withValues(alpha: 0.22),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Container(
-            width: 40,
+            width: 46,
             decoration: const BoxDecoration(gradient: AppGradients.cool),
           )
               .animate(onPlay: (c) => c.repeat())
-              .slideX(begin: -1.2, end: 3.5, duration: 1200.ms, curve: Curves.easeInOut),
+              .slideX(
+                  begin: -1.2, end: 3.5, duration: 1200.ms, curve: Curves.easeInOut),
         ),
       ),
     );
