@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -276,13 +278,19 @@ class _GameScreenState extends State<GameScreen>
           final heightPx = ((dur / _ctrl.approach) * fall).clamp(46.0, 220.0);
           final topY = bottomY - heightPx;
           final col = _col(n.event.lane);
+          final tailH = (heightPx * 0.85).clamp(48.0, 120.0);
           tiles.add(Positioned(
             key: ValueKey('tile_${n.id}'),
             left: col * laneW + gap,
-            top: topY,
+            top: topY - tailH,
             width: laneW - gap * 2,
-            height: heightPx,
-            child: PianoTile(color: kLaneColors[n.event.lane]),
+            height: heightPx + tailH,
+            child: PianoTile(
+              color: kLaneColors[n.event.lane],
+              bodyHeight: heightPx,
+              tailHeight: tailH,
+              intensity: f.clamp(0.0, 1.0),
+            ),
           ));
         }
 
@@ -295,17 +303,85 @@ class _GameScreenState extends State<GameScreen>
                 (e.localPosition.dx / laneW).floor().clamp(0, kLaneCount - 1);
             _tapLane(_leftHand ? (kLaneCount - 1 - col) : col);
           },
-          child: Stack(
+          child: ClipRect(
+            child: Stack(
             clipBehavior: Clip.none,
             children: [
-            // lane dividers
+            // ambient pulsing lane beams (subtle depth)
+            for (int lane = 0; lane < kLaneCount; lane++)
+              Positioned(
+                left: _col(lane) * laneW,
+                top: 0,
+                bottom: 0,
+                width: laneW,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          kLaneColors[lane].withValues(
+                            alpha: 0.04 +
+                                0.05 *
+                                    (0.5 +
+                                        0.5 *
+                                            math.sin(_ctrl.currentTime * 2.2 +
+                                                lane * 1.3)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // gradient lane guide-lines
             for (int i = 1; i < kLaneCount; i++)
               Positioned(
                 left: i * laneW,
                 top: 0,
                 bottom: 0,
-                child: Container(width: 1, color: AppColors.stroke),
+                child: IgnorePointer(
+                  child: Container(
+                    width: 1,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppColors.stroke,
+                          AppColors.stroke,
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 0.18, 0.82, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
               ),
+            // base glow that grounds the board
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: Container(
+                  height: 70,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        AppColors.neonPurple.withValues(alpha: 0.08),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             // lane light columns (glow up the lane on hit/press)
             for (int lane = 0; lane < kLaneCount; lane++)
               if (_ctrl.laneFlash[lane] > 0.01)
@@ -345,6 +421,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
               ),
           ],
+            ),
           ),
         );
       },
