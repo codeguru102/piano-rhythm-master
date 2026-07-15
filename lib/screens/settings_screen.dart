@@ -39,13 +39,16 @@ class SettingsScreen extends StatelessWidget {
               _section('Gameplay', [
                 _difficulty(settings),
                 _slider(
-                  'Note Speed (${settings.noteSpeed.toStringAsFixed(2)}×)',
+                  'Tile Speed (${settings.noteSpeed.toStringAsFixed(2)}×)',
                   Icons.speed_rounded,
-                  (settings.noteSpeed - 0.7) / 0.8, // map 0.7..1.5 -> 0..1
-                  (v) => settings.setNoteSpeed(0.7 + v * 0.8),
+                  (settings.noteSpeed - 0.5) / 1.5, // map 0.5..2.0 -> 0..1
+                  (v) => settings.setNoteSpeed(0.5 + v * 1.5),
                 ),
                 _switch('Left-hand Mode', Icons.swap_horiz_rounded,
                     settings.leftHandMode, settings.setLeftHandMode),
+                _switch('Classic Mode (one miss ends)',
+                    Icons.local_fire_department_rounded,
+                    settings.classicMode, settings.setClassicMode),
               ]),
               const SizedBox(height: AppSpace.md),
               _section('Account', [

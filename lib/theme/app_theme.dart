@@ -39,13 +39,12 @@ class AppColors {
   static const Color miss = Color(0xFFFF4D5E);
 }
 
-/// Per-lane accent colors (C D E F G).
+/// Per-lane accent colors for the 4 tile columns (C D E G).
 const List<Color> kLaneColors = [
   Color(0xFF3D8BFF), // blue
   Color(0xFF33E1ED), // cyan
   Color(0xFF9B5CFF), // purple
   Color(0xFFFF4D9D), // pink
-  Color(0xFFFF6A3D), // orange
 ];
 
 class AppGradients {

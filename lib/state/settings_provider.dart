@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/song.dart';
 import '../services/audio_service.dart';
+import 'game_controller.dart';
 
 /// User-adjustable audio and gameplay preferences (Settings screen).
 class SettingsProvider extends ChangeNotifier {
@@ -19,6 +20,7 @@ class SettingsProvider extends ChangeNotifier {
   double _noteSpeed = 1.0; // multiplier: higher = faster falling notes
   bool _leftHandMode = false;
   Difficulty _preferredDifficulty = Difficulty.normal;
+  GameMode _gameMode = GameMode.song;
 
   double get musicVolume => _musicVolume;
   double get sfxVolume => _sfxVolume;
@@ -26,6 +28,8 @@ class SettingsProvider extends ChangeNotifier {
   double get noteSpeed => _noteSpeed;
   bool get leftHandMode => _leftHandMode;
   Difficulty get preferredDifficulty => _preferredDifficulty;
+  GameMode get gameMode => _gameMode;
+  bool get classicMode => _gameMode == GameMode.classic;
 
   void _load() {
     _musicVolume = _prefs.getDouble('set_music') ?? 0.7;
@@ -35,6 +39,9 @@ class SettingsProvider extends ChangeNotifier {
     _leftHandMode = _prefs.getBool('set_left_hand') ?? false;
     _preferredDifficulty = DifficultyX.fromName(
         _prefs.getString('set_difficulty') ?? Difficulty.normal.name);
+    _gameMode = (_prefs.getString('set_game_mode') == 'classic')
+        ? GameMode.classic
+        : GameMode.song;
     _syncAudio();
   }
 
@@ -77,6 +84,12 @@ class SettingsProvider extends ChangeNotifier {
   void setPreferredDifficulty(Difficulty d) {
     _preferredDifficulty = d;
     _prefs.setString('set_difficulty', d.name);
+    notifyListeners();
+  }
+
+  void setClassicMode(bool on) {
+    _gameMode = on ? GameMode.classic : GameMode.song;
+    _prefs.setString('set_game_mode', on ? 'classic' : 'song');
     notifyListeners();
   }
 }

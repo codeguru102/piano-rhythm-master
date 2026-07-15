@@ -23,11 +23,16 @@ class ResultScreen extends StatefulWidget {
     required this.song,
     required this.result,
     this.unlocked = const [],
+    this.gameOver = false,
   });
 
   final Song song;
   final ScoreResult result;
   final List<Achievement> unlocked;
+
+  /// True when a classic run ended on a mistake (shows a Game Over banner,
+  /// skips the celebration confetti).
+  final bool gameOver;
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -39,8 +44,8 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    _confetti =
-        ConfettiController(duration: const Duration(seconds: 2))..play();
+    _confetti = ConfettiController(duration: const Duration(seconds: 2));
+    if (!widget.gameOver) _confetti.play();
     if (widget.unlocked.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showAchievements());
     }
@@ -123,6 +128,17 @@ class _ResultScreenState extends State<ResultScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
                 child: Column(
                   children: [
+                    if (widget.gameOver) ...[
+                      const GradientText(
+                        'GAME OVER',
+                        gradient: AppGradients.royal,
+                        style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
                     Text(
                       widget.song.title,
                       style: const TextStyle(

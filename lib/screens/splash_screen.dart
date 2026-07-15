@@ -7,6 +7,7 @@ import '../models/score_result.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/gradient_text.dart';
+import '../widgets/piano_muse.dart';
 import 'game_screen.dart';
 import 'main_shell.dart';
 import 'result_screen.dart';
@@ -75,27 +76,16 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 128,
-                height: 128,
-                decoration: BoxDecoration(
-                  gradient: AppGradients.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: glow(AppColors.neonPink, blur: 48, opacity: 0.6),
-                ),
-                child: const Icon(Icons.piano, color: Colors.white, size: 64),
-              )
+              const PianoMuse(size: 208)
                   .animate()
                   .scale(
-                    duration: 700.ms,
+                    duration: 800.ms,
                     curve: Curves.easeOutBack,
-                    begin: const Offset(0.4, 0.4),
+                    begin: const Offset(0.5, 0.5),
                     end: const Offset(1, 1),
                   )
-                  .fadeIn(duration: 500.ms)
-                  .then()
-                  .shimmer(duration: 1400.ms, color: Colors.white70),
-              const SizedBox(height: AppSpace.lg),
+                  .fadeIn(duration: 600.ms),
+              const SizedBox(height: AppSpace.md),
               const GradientText(
                 'Piano Rhythm Master',
                 textAlign: TextAlign.center,

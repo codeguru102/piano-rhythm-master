@@ -9,6 +9,10 @@ import '../services/audio_service.dart';
 
 enum GameStatus { playing, paused, finished }
 
+/// Song mode: play the whole track, misses just break combo.
+/// Classic: one miss or wrong tap ends the run; speed ramps up.
+enum GameMode { song, classic }
+
 enum Judgment { perfect, great, good, miss }
 
 extension JudgmentX on Judgment {
@@ -60,6 +64,20 @@ class GameController extends ChangeNotifier {
   GameStatus get status => _status;
   bool get isPlaying => _status == GameStatus.playing;
 
+  GameMode _mode = GameMode.song;
+  GameMode get mode => _mode;
+
+  /// Time-scale that ramps up in classic mode (tiles fall faster over time).
+  double _speed = 1.0;
+  double get speed => _speed;
+
+  /// True when a classic run ended on a mistake (vs. finishing the song).
+  bool failed = false;
+
+  /// Fraction (0 = top of board, 1 = bottom) of the last tile hit — used as
+  /// the on-screen origin for the explosion effect.
+  double lastHitFraction = 0;
+
   int _score = 0;
   int _combo = 0;
   int _maxCombo = 0;
@@ -104,9 +122,16 @@ class GameController extends ChangeNotifier {
   // hit-line flash per lane
   final List<double> laneFlash = List.filled(8, 0);
 
-  void configure({required Song song, required double noteSpeed}) {
+  void configure({
+    required Song song,
+    required double noteSpeed,
+    GameMode mode = GameMode.song,
+  }) {
     _song = song;
-    _approach = (song.difficulty.baseApproach / noteSpeed).clamp(0.6, 2.6);
+    _mode = mode;
+    _speed = 1.0;
+    failed = false;
+    _approach = (song.difficulty.baseApproach / noteSpeed).clamp(0.4, 3.4);
     _currentTime = 0;
     _score = 0;
     _combo = 0;
@@ -125,7 +150,11 @@ class GameController extends ChangeNotifier {
 
   void tick(double dt) {
     if (_status != GameStatus.playing) return;
-    _currentTime += dt;
+    // Classic mode accelerates as more tiles are cleared.
+    if (_mode == GameMode.classic) {
+      _speed = (1.0 + _judged * 0.02).clamp(1.0, 2.6);
+    }
+    _currentTime += dt * _speed;
 
     // spawn notes entering the approach window
     while (_spawnIndex < _song.beatMap.length &&
@@ -134,15 +163,18 @@ class GameController extends ChangeNotifier {
       _spawnIndex++;
     }
 
-    // miss notes that fell past the good window
+    // miss notes that fell off the bottom of the screen untapped
     for (final n in _active) {
-      if (!n.hit && _currentTime - n.event.time > kGoodWindow) {
+      if (!n.hit && _frac(n) > 1.08) {
         n.hit = true;
         _registerMiss();
+        if (_mode == GameMode.classic) {
+          _fail();
+          break;
+        }
       }
     }
-    _active.removeWhere(
-        (n) => n.hit && _currentTime - n.event.time > kGoodWindow + 0.15);
+    _active.removeWhere((n) => n.hit && _frac(n) > 1.3);
 
     // decay lane flashes
     for (var i = 0; i < laneFlash.length; i++) {
@@ -169,32 +201,74 @@ class GameController extends ChangeNotifier {
       return;
     }
 
+    if (_mode == GameMode.classic) {
+      _classicTap(lane);
+      notifyListeners();
+      return;
+    }
+
+    // Song mode: tap explodes the lowest (furthest-fallen) tile in this lane,
+    // wherever it is on screen. A tap on an empty column does nothing.
     ActiveNote? best;
-    double bestDelta = double.infinity;
+    double bestF = -1e9;
     for (final n in _active) {
       if (n.hit || n.event.lane != lane) continue;
-      final delta = (n.event.time - _currentTime).abs();
-      if (delta < bestDelta) {
-        bestDelta = delta;
+      final f = _frac(n);
+      if (f < -0.05 || f > 1.08) continue;
+      if (f > bestF) {
+        bestF = f;
         best = n;
       }
     }
 
-    if (best != null && bestDelta <= kGoodWindow) {
+    if (best != null) {
       best.hit = true;
       _lastHitLane = lane;
-      _registerHit(bestDelta);
+      lastHitFraction = bestF.clamp(0.0, 1.0);
+      _registerHit(_grade(bestF));
     }
     notifyListeners();
   }
 
-  void _registerHit(double delta) {
-    final Judgment j = delta <= kPerfectWindow
-        ? Judgment.perfect
-        : delta <= kGreatWindow
-            ? Judgment.great
-            : Judgment.good;
+  /// Classic Piano Tiles: you must tap the lowest un-hit tile's column, in
+  /// order. Tapping the wrong column (or with nothing on screen) ends the run.
+  void _classicTap(int lane) {
+    if (leadInRemaining > 0) return; // ignore taps during the countdown
+    final pending = _active.where((n) => !n.hit && _frac(n) <= 1.08).toList()
+      ..sort((a, b) => _frac(b).compareTo(_frac(a))); // lowest tile first
+    if (pending.isEmpty) {
+      _fail();
+      return;
+    }
+    final next = pending.first;
+    if (next.event.lane != lane) {
+      _fail();
+      return;
+    }
+    final f = _frac(next);
+    next.hit = true;
+    _lastHitLane = lane;
+    lastHitFraction = f.clamp(0.0, 1.0);
+    _registerHit(_grade(f));
+  }
 
+  void _fail() {
+    if (_status == GameStatus.finished) return;
+    failed = true;
+    _status = GameStatus.finished;
+  }
+
+  /// How far a tile has fallen: 0 at the top of the board, 1 at the bottom.
+  double _frac(ActiveNote n) => 1 - (n.event.time - _currentTime) / _approach;
+
+  /// Grade a hit by how far the tile had fallen — reward tapping promptly.
+  Judgment _grade(double f) {
+    if (f <= 0.72) return Judgment.perfect;
+    if (f <= 0.9) return Judgment.great;
+    return Judgment.good;
+  }
+
+  void _registerHit(Judgment j) {
     switch (j) {
       case Judgment.perfect:
         _perfect++;

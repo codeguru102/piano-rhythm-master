@@ -1,19 +1,21 @@
 import '../models/note_event.dart';
 import '../models/song.dart';
 
-/// Number of piano lanes / buttons: C D E F G.
-const int kLaneCount = 5;
+/// Number of tile columns: C D E G.
+const int kLaneCount = 4;
 
-/// Lane index -> synthesized tone asset (see assets/sounds/).
+/// Lane index -> piano tone asset (see assets/sounds/).
 const List<String> kLaneSounds = [
   'sounds/note_c4.wav',
   'sounds/note_d4.wav',
   'sounds/note_e4.wav',
-  'sounds/note_f4.wav',
   'sounds/note_g4.wav',
 ];
 
-const List<String> kLaneLabels = ['C', 'D', 'E', 'F', 'G'];
+const List<String> kLaneLabels = ['C', 'D', 'E', 'G'];
+
+/// Maps legacy 5-lane hand-authored patterns onto the 4 columns.
+const List<int> _remap5to4 = [0, 1, 2, 3, 3];
 
 const double _leadIn = 2.6;
 const double _tail = 2.4;
@@ -28,12 +30,19 @@ List<NoteEvent> _gen({
 }) {
   final secondsPerBeat = 60.0 / bpm;
   final stepDur = secondsPerBeat / stepsPerBeat;
+  // Keep the tile rate human-playable — never place notes closer than this.
+  const minGap = 0.16;
   final notes = <NoteEvent>[];
   double t = _leadIn;
+  double lastAdded = -999;
   int i = 0;
   while (t < _leadIn + targetSeconds) {
-    final lane = pattern[i % pattern.length];
-    if (lane >= 0) notes.add(NoteEvent(double.parse(t.toStringAsFixed(3)), lane));
+    final raw = pattern[i % pattern.length];
+    if (raw >= 0 && t - lastAdded >= minGap) {
+      final lane = raw < kLaneCount ? raw : _remap5to4[raw.clamp(0, 4)];
+      notes.add(NoteEvent(double.parse(t.toStringAsFixed(3)), lane));
+      lastAdded = t;
+    }
     t += stepDur;
     i++;
   }

@@ -22,13 +22,13 @@ class TextToMidiClient {
 
   final http.Client _client;
 
-  /// Lane sound pitch classes: C, D, E, F, G (semitones within an octave).
-  static const List<int> _lanePitchClasses = [0, 2, 4, 5, 7];
+  /// Lane sound pitch classes: C, D, E, G (semitones within an octave).
+  static const List<int> _lanePitchClasses = [0, 2, 4, 7];
 
   static const double _leadIn = 2.6; // matches seed songs' intro countdown
   static const double _tail = 2.4;
   static const double _clusterEps = 0.07; // merge near-simultaneous notes
-  static const double _minGap = 0.09; // floor on spacing for playability
+  static const double _minGap = 0.16; // floor on spacing for playability
 
   Future<Song> generate({
     required String baseUrl,

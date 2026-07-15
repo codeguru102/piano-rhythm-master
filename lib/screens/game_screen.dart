@@ -11,10 +11,9 @@ import '../state/game_controller.dart';
 import '../state/profile_provider.dart';
 import '../state/settings_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/piano_button.dart';
-import '../widgets/falling_note.dart';
+import '../widgets/piano_tile.dart';
 import '../widgets/gradient_background.dart';
-import '../widgets/hit_burst.dart';
+import '../widgets/fireworks.dart';
 import '../widgets/score_display.dart';
 import 'result_screen.dart';
 
@@ -48,7 +47,10 @@ class _GameScreenState extends State<GameScreen>
     _ctrl = context.read<GameController>();
     _settings = context.read<SettingsProvider>();
     _leftHand = _settings.leftHandMode;
-    _ctrl.configure(song: widget.song, noteSpeed: _settings.noteSpeed);
+    _ctrl.configure(
+        song: widget.song,
+        noteSpeed: _settings.noteSpeed,
+        mode: _settings.gameMode);
     _ticker = createTicker(_onTick)..start();
   }
 
@@ -79,6 +81,7 @@ class _GameScreenState extends State<GameScreen>
         song: widget.song,
         result: result,
         unlocked: unlocked,
+        gameOver: _ctrl.failed,
       )),
     );
   }
@@ -95,7 +98,8 @@ class _GameScreenState extends State<GameScreen>
           Judgment.good => AppColors.good,
           Judgment.miss => AppColors.miss,
         };
-        _bursts.add(_Burst(_burstSeq++, _ctrl.lastHitLane!, color));
+        _bursts.add(_Burst(
+            _burstSeq++, _ctrl.lastHitLane!, color, _ctrl.lastHitFraction));
         if (_settings.vibration) HapticFeedback.selectionClick();
       }
     }
@@ -110,7 +114,10 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _navigated = false;
       _last = 0;
-      _ctrl.configure(song: widget.song, noteSpeed: _settings.noteSpeed);
+      _ctrl.configure(
+        song: widget.song,
+        noteSpeed: _settings.noteSpeed,
+        mode: _settings.gameMode);
     });
     if (!_ticker.isActive) _ticker.start();
   }
@@ -138,7 +145,6 @@ class _GameScreenState extends State<GameScreen>
                       children: [
                         _header(),
                         Expanded(child: _noteArea()),
-                        _pianoRow(),
                       ],
                     ),
                     _feedback(),
@@ -162,7 +168,7 @@ class _GameScreenState extends State<GameScreen>
         children: [
           Row(
             children: [
-              const SizedBox(width: 44),
+              _modeBadge(),
               Expanded(
                 child: ScoreDisplay(
                   score: _ctrl.score,
@@ -183,6 +189,41 @@ class _GameScreenState extends State<GameScreen>
               backgroundColor: AppColors.panelHi,
               valueColor:
                   const AlwaysStoppedAnimation(AppColors.neonPurple),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeBadge() {
+    final classic = _ctrl.mode == GameMode.classic;
+    final accent = classic ? AppColors.expert : AppColors.neonCyan;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.panel,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        border: Border.all(color: classic ? accent.withValues(alpha: 0.7) : AppColors.stroke),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            classic
+                ? Icons.local_fire_department_rounded
+                : Icons.music_note_rounded,
+            size: 15,
+            color: accent,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            classic ? 'CLASSIC' : 'SONG',
+            style: TextStyle(
+              color: classic ? accent : AppColors.textMid,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -214,29 +255,47 @@ class _GameScreenState extends State<GameScreen>
         final h = constraints.maxHeight;
         final w = constraints.maxWidth;
         final laneW = w / kLaneCount;
-        final hitY = h - 8;
-        const noteH = 30.0;
+        final fall = h; // tiles fall the entire screen height
+        const gap = 5.0;
 
-        final notes = <Widget>[];
+        // Build falling tiles; each tile's height follows the rhythm gap to
+        // the previous note so they read as a continuous stream of tiles.
+        final tiles = <Widget>[];
+        double prevTime = double.nan;
         for (final n in _ctrl.activeNotes) {
+          final dur = prevTime.isNaN
+              ? 0.28
+              : (n.event.time - prevTime).clamp(0.12, 0.5);
+          prevTime = n.event.time;
+          if (n.hit) continue;
           final f = 1 - (n.event.time - _ctrl.currentTime) / _ctrl.approach;
-          if (f < -0.05 || n.hit) continue;
+          if (f < -0.05 || f > 1.08) continue;
+          final bottomY = f * fall;
+          final heightPx = ((dur / _ctrl.approach) * fall).clamp(46.0, 220.0);
+          final topY = bottomY - heightPx;
           final col = _col(n.event.lane);
-          final top = f * hitY - noteH;
-          notes.add(Positioned(
-            left: col * laneW + 6,
-            top: top,
-            child: FallingNote(
-              color: kLaneColors[n.event.lane],
-              width: laneW - 12,
-              height: noteH,
-            ),
+          tiles.add(Positioned(
+            key: ValueKey('tile_${n.id}'),
+            left: col * laneW + gap,
+            top: topY,
+            width: laneW - gap * 2,
+            height: heightPx,
+            child: PianoTile(color: kLaneColors[n.event.lane]),
           ));
         }
 
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
+        // Whole board is the tap surface (multi-touch via Listener): a pointer
+        // down anywhere in a column taps that column's tile.
+        return Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (e) {
+            final col =
+                (e.localPosition.dx / laneW).floor().clamp(0, kLaneCount - 1);
+            _tapLane(_leftHand ? (kLaneCount - 1 - col) : col);
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
             // lane dividers
             for (int i = 1; i < kLaneCount; i++)
               Positioned(
@@ -269,76 +328,24 @@ class _GameScreenState extends State<GameScreen>
                     ),
                   ),
                 ),
-            // hit line + targets
-            Positioned(
-              left: 0,
-              right: 0,
-              top: hitY - 3,
-              child: Container(
-                height: 3,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  boxShadow: glow(AppColors.neonCyan, blur: 10, opacity: 0.5),
-                ),
-              ),
-            ),
-            for (int lane = 0; lane < kLaneCount; lane++)
-              Positioned(
-                left: _col(lane) * laneW + laneW / 2 - 16,
-                top: hitY - 18,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: kLaneColors[lane].withValues(alpha: 0.7),
-                        width: 2),
-                    color: kLaneColors[lane]
-                        .withValues(alpha: 0.12 + 0.5 * _ctrl.laneFlash[lane]),
-                  ),
-                ),
-              ),
-            ...notes,
+            ...tiles,
             // hit bursts
             for (final b in _bursts)
               Positioned(
-                left: _col(b.lane) * laneW + laneW / 2 - 40,
-                top: hitY - 40,
-                width: 80,
-                height: 80,
-                child: HitBurst(
-                  key: ValueKey(b.id),
+                key: ValueKey('burst_${b.id}'),
+                left: _col(b.lane) * laneW + laneW / 2 - 110,
+                top: (b.fraction * fall) - 110,
+                width: 220,
+                height: 220,
+                child: Fireworks(
                   color: b.color,
                   onDone: () => _removeBurst(b.id),
                 ),
               ),
           ],
+          ),
         );
       },
-    );
-  }
-
-  Widget _pianoRow() {
-    return Container(
-      height: 150,
-      padding: const EdgeInsets.fromLTRB(6, 6, 6, 10),
-      child: Row(
-        children: [
-          for (int col = 0; col < kLaneCount; col++)
-            Expanded(
-              child: Builder(builder: (_) {
-                final lane = _leftHand ? (kLaneCount - 1 - col) : col;
-                return PianoButton(
-                  label: kLaneLabels[lane],
-                  color: kLaneColors[lane],
-                  flash: _ctrl.laneFlash[lane],
-                  onPressed: () => _tapLane(lane),
-                );
-              }),
-            ),
-        ],
-      ),
     );
   }
 
@@ -354,7 +361,7 @@ class _GameScreenState extends State<GameScreen>
     return Positioned(
       left: 0,
       right: 0,
-      bottom: 220,
+      bottom: 150,
       child: IgnorePointer(
         child: Center(
           child: AnimatedSwitcher(
@@ -467,5 +474,6 @@ class _Burst {
   final int id;
   final int lane;
   final Color color;
-  const _Burst(this.id, this.lane, this.color);
+  final double fraction; // 0 = top of board, 1 = bottom
+  const _Burst(this.id, this.lane, this.color, this.fraction);
 }
