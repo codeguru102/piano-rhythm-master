@@ -98,6 +98,8 @@ class _GameScreenState extends State<GameScreen>
           Judgment.good => AppColors.good,
           Judgment.miss => AppColors.miss,
         };
+        // Cap concurrent explosions so a fast run can't stack render cost.
+        if (_bursts.length >= 6) _bursts.removeAt(0);
         _bursts.add(_Burst(
             _burstSeq++, _ctrl.lastHitLane!, color, _ctrl.lastHitFraction));
         if (_settings.vibration) HapticFeedback.selectionClick();
