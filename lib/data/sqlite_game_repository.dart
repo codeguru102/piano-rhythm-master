@@ -26,14 +26,10 @@ class SqliteGameRepository implements GameRepository {
 
   @override
   Future<void> init() async {
-    final path =
-        kIsWeb ? _dbName : p.join(await getDatabasesPath(), _dbName);
+    final path = kIsWeb ? _dbName : p.join(await getDatabasesPath(), _dbName);
     _db = await databaseFactory.openDatabase(
       path,
-      options: OpenDatabaseOptions(
-        version: _dbVersion,
-        onCreate: _onCreate,
-      ),
+      options: OpenDatabaseOptions(version: _dbVersion, onCreate: _onCreate),
     );
   }
 
@@ -86,23 +82,22 @@ class SqliteGameRepository implements GameRepository {
   Future<List<Song>> fetchSongs() async {
     final rows = await _db.query('custom_songs', orderBy: 'created_at DESC');
     final custom = rows
-        .map((r) =>
-            Song.fromJson(jsonDecode(r['data'] as String) as Map<String, dynamic>))
+        .map(
+          (r) => Song.fromJson(
+            jsonDecode(r['data'] as String) as Map<String, dynamic>,
+          ),
+        )
         .toList();
     return [...custom, ...kSeedSongs];
   }
 
   @override
   Future<void> saveCustomSong(Song song) async {
-    await _db.insert(
-      'custom_songs',
-      {
-        'song_id': song.id,
-        'created_at': DateTime.now().millisecondsSinceEpoch,
-        'data': jsonEncode(song.toJson()),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.insert('custom_songs', {
+      'song_id': song.id,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+      'data': jsonEncode(song.toJson()),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
     // Keep only the newest 50 generated songs.
     await _db.execute('''
       DELETE FROM custom_songs WHERE song_id NOT IN (
@@ -141,25 +136,21 @@ class SqliteGameRepository implements GameRepository {
 
   @override
   Future<void> saveProfile(UserProfile profile) async {
-    await _db.insert(
-      'profile',
-      {
-        'user_id': profile.userId,
-        'username': profile.username,
-        'avatar': profile.avatar,
-        'experience': profile.experience,
-        'coins': profile.coins,
-        'created_time': profile.createdTime.millisecondsSinceEpoch,
-        'total_songs_played': profile.totalSongsPlayed,
-        'highest_score': profile.highestScore,
-        'highest_combo': profile.highestCombo,
-        'best_accuracy': profile.bestAccuracy,
-        'best_scores': jsonEncode(profile.bestScores),
-        'favorites': jsonEncode(profile.favorites.toList()),
-        'achievements': jsonEncode(profile.achievements.toList()),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.insert('profile', {
+      'user_id': profile.userId,
+      'username': profile.username,
+      'avatar': profile.avatar,
+      'experience': profile.experience,
+      'coins': profile.coins,
+      'created_time': profile.createdTime.millisecondsSinceEpoch,
+      'total_songs_played': profile.totalSongsPlayed,
+      'highest_score': profile.highestScore,
+      'highest_combo': profile.highestCombo,
+      'best_accuracy': profile.bestAccuracy,
+      'best_scores': jsonEncode(profile.bestScores),
+      'favorites': jsonEncode(profile.favorites.toList()),
+      'achievements': jsonEncode(profile.achievements.toList()),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // ---- Scores ----------------------------------------------------------
@@ -195,18 +186,20 @@ class SqliteGameRepository implements GameRepository {
       orderBy: 'timestamp DESC',
     );
     return rows
-        .map((r) => ScoreResult.fromJson({
-              'song_id': r['song_id'],
-              'score': r['score'],
-              'accuracy': r['accuracy'],
-              'combo': r['combo'],
-              'perfect': r['perfect'],
-              'great': r['great'],
-              'good': r['good'],
-              'miss': r['miss'],
-              'total_notes': r['total_notes'],
-              'timestamp': r['timestamp'],
-            }))
+        .map(
+          (r) => ScoreResult.fromJson({
+            'song_id': r['song_id'],
+            'score': r['score'],
+            'accuracy': r['accuracy'],
+            'combo': r['combo'],
+            'perfect': r['perfect'],
+            'great': r['great'],
+            'good': r['good'],
+            'miss': r['miss'],
+            'total_notes': r['total_notes'],
+            'timestamp': r['timestamp'],
+          }),
+        )
         .toList();
   }
 }

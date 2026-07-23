@@ -36,13 +36,13 @@ class UserProfile {
   });
 
   factory UserProfile.initial() => UserProfile(
-        userId: 'local-player',
-        username: 'Player One',
-        avatar: '🎧',
-        experience: 0,
-        coins: 250,
-        createdTime: DateTime(2024, 1, 1),
-      );
+    userId: 'local-player',
+    username: 'Player One',
+    avatar: '🎧',
+    experience: 0,
+    coins: 250,
+    createdTime: DateTime(2024, 1, 1),
+  );
 
   /// XP required to have reached the start of [level].
   static int xpForLevel(int level) => 300 * (level - 1) * (level - 1);
@@ -85,40 +85,43 @@ class UserProfile {
   }
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
-        userId: json['user_id'] as String,
-        username: json['username'] as String,
-        avatar: json['avatar'] as String? ?? '🎧',
-        experience: json['experience'] as int? ?? 0,
-        coins: json['coins'] as int? ?? 0,
-        createdTime:
-            DateTime.fromMillisecondsSinceEpoch(json['created_time'] as int),
-        totalSongsPlayed: json['total_songs_played'] as int? ?? 0,
-        highestScore: json['highest_score'] as int? ?? 0,
-        highestCombo: json['highest_combo'] as int? ?? 0,
-        bestAccuracy: (json['best_accuracy'] as num?)?.toDouble() ?? 0,
-        bestScores: (json['best_scores'] as Map<String, dynamic>? ?? {})
-            .map((k, v) => MapEntry(k, v as int)),
-        favorites:
-            ((json['favorites'] as List?) ?? []).map((e) => e as String).toSet(),
-        achievements: ((json['achievements'] as List?) ?? [])
-            .map((e) => e as String)
-            .toSet(),
-      );
+    userId: json['user_id'] as String,
+    username: json['username'] as String,
+    avatar: json['avatar'] as String? ?? '🎧',
+    experience: json['experience'] as int? ?? 0,
+    coins: json['coins'] as int? ?? 0,
+    createdTime: DateTime.fromMillisecondsSinceEpoch(
+      json['created_time'] as int,
+    ),
+    totalSongsPlayed: json['total_songs_played'] as int? ?? 0,
+    highestScore: json['highest_score'] as int? ?? 0,
+    highestCombo: json['highest_combo'] as int? ?? 0,
+    bestAccuracy: (json['best_accuracy'] as num?)?.toDouble() ?? 0,
+    bestScores: (json['best_scores'] as Map<String, dynamic>? ?? {}).map(
+      (k, v) => MapEntry(k, v as int),
+    ),
+    favorites: ((json['favorites'] as List?) ?? [])
+        .map((e) => e as String)
+        .toSet(),
+    achievements: ((json['achievements'] as List?) ?? [])
+        .map((e) => e as String)
+        .toSet(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'username': username,
-        'avatar': avatar,
-        'level': level,
-        'experience': experience,
-        'coins': coins,
-        'created_time': createdTime.millisecondsSinceEpoch,
-        'total_songs_played': totalSongsPlayed,
-        'highest_score': highestScore,
-        'highest_combo': highestCombo,
-        'best_accuracy': bestAccuracy,
-        'best_scores': bestScores,
-        'favorites': favorites.toList(),
-        'achievements': achievements.toList(),
-      };
+    'user_id': userId,
+    'username': username,
+    'avatar': avatar,
+    'level': level,
+    'experience': experience,
+    'coins': coins,
+    'created_time': createdTime.millisecondsSinceEpoch,
+    'total_songs_played': totalSongsPlayed,
+    'highest_score': highestScore,
+    'highest_combo': highestCombo,
+    'best_accuracy': bestAccuracy,
+    'best_scores': bestScores,
+    'favorites': favorites.toList(),
+    'achievements': achievements.toList(),
+  };
 }

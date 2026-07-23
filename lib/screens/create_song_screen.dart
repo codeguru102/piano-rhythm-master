@@ -63,9 +63,9 @@ class _CreateSongScreenState extends State<CreateSongScreen> {
       if (!mounted) return;
       // Replace this screen with the game so returning lands back in the
       // library (which will show the freshly saved song).
-      Navigator.of(context).pushReplacement(
-        AppRoutes.scaleFade(GameScreen(song: song)),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(AppRoutes.scaleFade(GameScreen(song: song)));
     } on TextToMidiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (e) {
@@ -117,14 +117,17 @@ class _CreateSongScreenState extends State<CreateSongScreen> {
                       const SizedBox(height: 20),
                       const Center(
                         child: CircularProgressIndicator(
-                            color: AppColors.neonPurple),
+                          color: AppColors.neonPurple,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       const Center(
                         child: Text(
                           'Composing your track…',
-                          style:
-                              TextStyle(color: AppColors.textMid, fontSize: 13),
+                          style: TextStyle(
+                            color: AppColors.textMid,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
@@ -158,15 +161,16 @@ class _CreateSongScreenState extends State<CreateSongScreen> {
   }
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(
-          text,
-          style: const TextStyle(
-              color: AppColors.textMid,
-              fontSize: 13,
-              fontWeight: FontWeight.w600),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.textMid,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
 
   Widget _promptField() {
     return TextField(
@@ -181,23 +185,23 @@ class _CreateSongScreenState extends State<CreateSongScreen> {
   }
 
   InputDecoration _decoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textLow),
-        filled: true,
-        fillColor: AppColors.panel,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          borderSide: const BorderSide(color: AppColors.stroke),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          borderSide: const BorderSide(color: AppColors.neonPurple),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          borderSide: const BorderSide(color: AppColors.stroke),
-        ),
-      );
+    hintText: hint,
+    hintStyle: const TextStyle(color: AppColors.textLow),
+    filled: true,
+    fillColor: AppColors.panel,
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      borderSide: const BorderSide(color: AppColors.stroke),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      borderSide: const BorderSide(color: AppColors.neonPurple),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      borderSide: const BorderSide(color: AppColors.stroke),
+    ),
+  );
 
   Widget _difficultyRow() {
     return Wrap(
@@ -213,7 +217,9 @@ class _CreateSongScreenState extends State<CreateSongScreen> {
                 color: _difficulty == d ? null : AppColors.panel,
                 borderRadius: BorderRadius.circular(AppRadii.pill),
                 border: Border.all(
-                  color: _difficulty == d ? Colors.transparent : AppColors.stroke,
+                  color: _difficulty == d
+                      ? Colors.transparent
+                      : AppColors.stroke,
                 ),
               ),
               child: Text(
@@ -241,10 +247,10 @@ class _CreateSongScreenState extends State<CreateSongScreen> {
   }
 
   Widget _errorBox(String message) => _infoBox(
-        icon: Icons.error_outline_rounded,
-        color: AppColors.miss,
-        message: message,
-      );
+    icon: Icons.error_outline_rounded,
+    color: AppColors.miss,
+    message: message,
+  );
 
   Widget _infoBox({
     required IconData icon,

@@ -22,18 +22,43 @@ class SettingsScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
             children: [
-              const GradientText('Settings',
-                  gradient: AppGradients.aurora,
-                  style:
-                      TextStyle(fontSize: 25, fontWeight: FontWeight.w600)),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  const Expanded(
+                    child: GradientText(
+                      'Settings',
+                      gradient: AppGradients.aurora,
+                      style: AppTextStyles.screenTitle,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppSpace.lg),
               _section('Audio', [
-                _slider('Music Volume', Icons.music_note_rounded,
-                    settings.musicVolume, settings.setMusicVolume),
-                _slider('Sound Effects', Icons.graphic_eq_rounded,
-                    settings.sfxVolume, settings.setSfxVolume),
-                _switch('Vibration', Icons.vibration_rounded,
-                    settings.vibration, settings.setVibration),
+                _slider(
+                  'Music Volume',
+                  Icons.music_note_rounded,
+                  settings.musicVolume,
+                  settings.setMusicVolume,
+                ),
+                _slider(
+                  'Sound Effects',
+                  Icons.graphic_eq_rounded,
+                  settings.sfxVolume,
+                  settings.setSfxVolume,
+                ),
+                _switch(
+                  'Vibration',
+                  Icons.vibration_rounded,
+                  settings.vibration,
+                  settings.setVibration,
+                ),
               ]),
               const SizedBox(height: AppSpace.md),
               _section('Gameplay', [
@@ -44,20 +69,27 @@ class SettingsScreen extends StatelessWidget {
                   (settings.noteSpeed - 0.5) / 1.5, // map 0.5..2.0 -> 0..1
                   (v) => settings.setNoteSpeed(0.5 + v * 1.5),
                 ),
-                _switch('Left-hand Mode', Icons.swap_horiz_rounded,
-                    settings.leftHandMode, settings.setLeftHandMode),
-                _switch('Classic Mode (one miss ends)',
-                    Icons.local_fire_department_rounded,
-                    settings.classicMode, settings.setClassicMode),
+                _switch(
+                  'Left-hand Mode',
+                  Icons.swap_horiz_rounded,
+                  settings.leftHandMode,
+                  settings.setLeftHandMode,
+                ),
+                _switch(
+                  'Classic Mode (one miss ends)',
+                  Icons.local_fire_department_rounded,
+                  settings.classicMode,
+                  settings.setClassicMode,
+                ),
               ]),
               const SizedBox(height: AppSpace.md),
-              _section('Account', [
-                _accountRow(context, profile),
-              ]),
+              _section('Account', [_accountRow(context, profile)]),
               const SizedBox(height: AppSpace.lg),
               const Center(
-                child: Text('Piano Rhythm Master • v1.0.0',
-                    style: TextStyle(color: AppColors.textLow, fontSize: 12)),
+                child: Text(
+                  'Piano Rhythm Master • v1.0.0',
+                  style: TextStyle(color: AppColors.textLow, fontSize: 12),
+                ),
               ),
             ],
           ),
@@ -79,12 +111,15 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(title,
-                style: const TextStyle(
-                    color: AppColors.neonPurple,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5)),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.neonPurple,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
           ...children,
         ],
@@ -93,7 +128,11 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _slider(
-      String label, IconData icon, double value, ValueChanged<double> onChanged) {
+    String label,
+    IconData icon,
+    double value,
+    ValueChanged<double> onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -102,8 +141,10 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(width: 10),
           SizedBox(
             width: 140,
-            child: Text(label,
-                style: const TextStyle(color: AppColors.textHi, fontSize: 14)),
+            child: Text(
+              label,
+              style: const TextStyle(color: AppColors.textHi, fontSize: 14),
+            ),
           ),
           Expanded(
             child: SliderTheme(
@@ -113,10 +154,7 @@ class SettingsScreen extends StatelessWidget {
                 thumbColor: AppColors.neonPink,
                 overlayColor: Color(0x33FF4D9D),
               ),
-              child: Slider(
-                value: value.clamp(0.0, 1.0),
-                onChanged: onChanged,
-              ),
+              child: Slider(value: value.clamp(0.0, 1.0), onChanged: onChanged),
             ),
           ),
         ],
@@ -125,7 +163,11 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _switch(
-      String label, IconData icon, bool value, ValueChanged<bool> onChanged) {
+    String label,
+    IconData icon,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -133,8 +175,10 @@ class SettingsScreen extends StatelessWidget {
           Icon(icon, color: AppColors.textMid, size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(label,
-                style: const TextStyle(color: AppColors.textHi, fontSize: 14)),
+            child: Text(
+              label,
+              style: const TextStyle(color: AppColors.textHi, fontSize: 14),
+            ),
           ),
           Switch(
             value: value,
@@ -154,8 +198,10 @@ class SettingsScreen extends StatelessWidget {
         children: [
           const Icon(Icons.tune_rounded, color: AppColors.textMid, size: 20),
           const SizedBox(width: 10),
-          const Text('Difficulty',
-              style: TextStyle(color: AppColors.textHi, fontSize: 14)),
+          const Text(
+            'Difficulty',
+            style: TextStyle(color: AppColors.textHi, fontSize: 14),
+          ),
           const Spacer(),
           Wrap(
             spacing: 6,
@@ -164,8 +210,10 @@ class SettingsScreen extends StatelessWidget {
                 GestureDetector(
                   onTap: () => settings.setPreferredDifficulty(d),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: settings.preferredDifficulty == d
                           ? d.color.withValues(alpha: 0.22)
@@ -177,13 +225,16 @@ class SettingsScreen extends StatelessWidget {
                             : AppColors.stroke,
                       ),
                     ),
-                    child: Text(d.label,
-                        style: TextStyle(
-                            color: settings.preferredDifficulty == d
-                                ? d.color
-                                : AppColors.textMid,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500)),
+                    child: Text(
+                      d.label,
+                      style: TextStyle(
+                        color: settings.preferredDifficulty == d
+                            ? d.color
+                            : AppColors.textMid,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -197,12 +248,19 @@ class SettingsScreen extends StatelessWidget {
     final loggedIn = profile.loggedIn;
     return Row(
       children: [
-        Icon(loggedIn ? Icons.logout_rounded : Icons.login_rounded,
-            color: AppColors.textMid, size: 20),
+        Icon(
+          loggedIn ? Icons.logout_rounded : Icons.login_rounded,
+          color: AppColors.textMid,
+          size: 20,
+        ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(loggedIn ? 'Signed in as ${profile.profile.username}' : 'Signed out',
-              style: const TextStyle(color: AppColors.textHi, fontSize: 14)),
+          child: Text(
+            loggedIn
+                ? 'Signed in as ${profile.profile.username}'
+                : 'Signed out',
+            style: const TextStyle(color: AppColors.textHi, fontSize: 14),
+          ),
         ),
         TextButton(
           onPressed: () {
@@ -210,13 +268,17 @@ class SettingsScreen extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: AppColors.panelHi,
-                content: Text(loggedIn ? 'Logged out' : 'Logged in',
-                    style: const TextStyle(color: AppColors.textHi)),
+                content: Text(
+                  loggedIn ? 'Logged out' : 'Logged in',
+                  style: const TextStyle(color: AppColors.textHi),
+                ),
               ),
             );
           },
-          child: Text(loggedIn ? 'Logout' : 'Login',
-              style: const TextStyle(color: AppColors.neonPink)),
+          child: Text(
+            loggedIn ? 'Logout' : 'Login',
+            style: const TextStyle(color: AppColors.neonPink),
+          ),
         ),
       ],
     );

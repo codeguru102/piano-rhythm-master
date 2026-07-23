@@ -17,26 +17,38 @@ enum Judgment { perfect, great, good, miss }
 
 extension JudgmentX on Judgment {
   String get label => switch (this) {
-        Judgment.perfect => 'PERFECT!',
-        Judgment.great => 'GREAT!',
-        Judgment.good => 'GOOD',
-        Judgment.miss => 'MISS',
-      };
+    Judgment.perfect => 'PERFECT!',
+    Judgment.great => 'GREAT!',
+    Judgment.good => 'GOOD',
+    Judgment.miss => 'MISS',
+  };
 
   int get baseScore => switch (this) {
-        Judgment.perfect => 100,
-        Judgment.great => 70,
-        Judgment.good => 40,
-        Judgment.miss => 0,
-      };
+    Judgment.perfect => 100,
+    Judgment.great => 70,
+    Judgment.good => 40,
+    Judgment.miss => 0,
+  };
 }
 
 /// A note currently on screen.
+enum ActiveNoteState { pending, holding, resolved }
+
 class ActiveNote {
   final NoteEvent event;
   final int id;
-  bool hit = false;
+  ActiveNoteState state = ActiveNoteState.pending;
+  Judgment? pressJudgment;
+
   ActiveNote(this.event, this.id);
+
+  bool get hit => state == ActiveNoteState.resolved;
+  bool get isHolding => state == ActiveNoteState.holding;
+
+  double holdProgress(double currentTime) {
+    if (!event.isHold) return 0;
+    return ((currentTime - event.time) / event.duration).clamp(0.0, 1.0);
+  }
 }
 
 /// Timing windows (seconds).
@@ -121,6 +133,7 @@ class GameController extends ChangeNotifier {
 
   // hit-line flash per lane
   final List<double> laneFlash = List.filled(8, 0);
+  final List<bool> laneHeld = List.filled(8, false);
 
   void configure({
     required Song song,
@@ -145,6 +158,7 @@ class GameController extends ChangeNotifier {
     _status = GameStatus.playing;
     for (var i = 0; i < laneFlash.length; i++) {
       laneFlash[i] = 0;
+      laneHeld[i] = false;
     }
   }
 
@@ -163,10 +177,18 @@ class GameController extends ChangeNotifier {
       _spawnIndex++;
     }
 
-    // miss notes that fell off the bottom of the screen untapped
+    // Resolve completed sustains, and miss notes that fell off untapped.
     for (final n in _active) {
-      if (!n.hit && _frac(n) > 1.08) {
-        n.hit = true;
+      if (n.isHolding && _currentTime >= n.event.time + n.event.duration) {
+        n.state = ActiveNoteState.resolved;
+        laneHeld[n.event.lane] = false;
+        _lastHitLane = n.event.lane;
+        lastHitFraction = 1;
+        _registerHit(n.pressJudgment ?? Judgment.good, holdBonus: true);
+      } else if (n.state == ActiveNoteState.pending && _frac(n) > 1.08) {
+        n.state = ActiveNoteState.resolved;
+        _lastHitLane = n.event.lane;
+        lastHitFraction = 1;
         _registerMiss();
         if (_mode == GameMode.classic) {
           _fail();
@@ -176,9 +198,13 @@ class GameController extends ChangeNotifier {
     }
     _active.removeWhere((n) => n.hit && _frac(n) > 1.3);
 
-    // decay lane flashes
+    // Decay tap flashes. Held lanes keep a living glow until release.
     for (var i = 0; i < laneFlash.length; i++) {
-      if (laneFlash[i] > 0) laneFlash[i] = math.max(0, laneFlash[i] - dt * 4);
+      if (laneHeld[i]) {
+        laneFlash[i] = 0.72 + 0.16 * math.sin(_currentTime * 10);
+      } else if (laneFlash[i] > 0) {
+        laneFlash[i] = math.max(0, laneFlash[i] - dt * 4);
+      }
     }
 
     // finish
@@ -191,10 +217,10 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Player tapped a lane. Always plays the piano tone; judges the nearest
+  /// Player pressed a lane. Always plays the piano tone; judges the nearest
   /// hittable note in that lane if one is within the good window.
-  void onLaneTap(int lane) {
-    _audio.playLane(lane);
+  void onLanePress(int lane, {bool playSound = true}) {
+    if (playSound) _audio.playLane(lane);
     if (lane < laneFlash.length) laneFlash[lane] = 1.0;
     if (_status != GameStatus.playing) {
       notifyListeners();
@@ -202,7 +228,7 @@ class GameController extends ChangeNotifier {
     }
 
     if (_mode == GameMode.classic) {
-      _classicTap(lane);
+      _classicPress(lane);
       notifyListeners();
       return;
     }
@@ -222,34 +248,93 @@ class GameController extends ChangeNotifier {
     }
 
     if (best != null) {
-      best.hit = true;
       _lastHitLane = lane;
       lastHitFraction = bestF.clamp(0.0, 1.0);
-      _registerHit(_grade(bestF));
+      final judgment = _grade(bestF);
+      if (best.event.isHold) {
+        best.state = ActiveNoteState.holding;
+        best.pressJudgment = judgment;
+        laneHeld[lane] = true;
+        _setFeedback(judgment);
+      } else {
+        best.state = ActiveNoteState.resolved;
+        _registerHit(judgment);
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Compatibility entry point for callers that only need a quick tap.
+  void onLaneTap(int lane, {bool playSound = true}) {
+    onLanePress(lane, playSound: playSound);
+    onLaneRelease(lane);
+  }
+
+  /// Releases an active sustain. Releasing near or after its tail succeeds;
+  /// letting go early breaks the note and the combo.
+  void onLaneRelease(int lane) {
+    if (lane < laneHeld.length) laneHeld[lane] = false;
+    if (_status != GameStatus.playing) return;
+
+    ActiveNote? held;
+    for (final note in _active) {
+      if (note.event.lane == lane && note.isHolding) {
+        held = note;
+        break;
+      }
+    }
+    if (held == null) {
+      notifyListeners();
+      return;
+    }
+
+    final end = held.event.time + held.event.duration;
+    held.state = ActiveNoteState.resolved;
+    _lastHitLane = lane;
+    lastHitFraction = 1;
+    if (_currentTime >= end - 0.12) {
+      _registerHit(held.pressJudgment ?? Judgment.good, holdBonus: true);
+    } else {
+      _registerMiss();
+      if (_mode == GameMode.classic) _fail();
     }
     notifyListeners();
   }
 
   /// Classic Piano Tiles: you must tap the lowest un-hit tile's column, in
   /// order. Tapping the wrong column (or with nothing on screen) ends the run.
-  void _classicTap(int lane) {
+  void _classicPress(int lane) {
     if (leadInRemaining > 0) return; // ignore taps during the countdown
     final pending = _active.where((n) => !n.hit && _frac(n) <= 1.08).toList()
       ..sort((a, b) => _frac(b).compareTo(_frac(a))); // lowest tile first
     if (pending.isEmpty) {
+      _lastHitLane = lane;
+      lastHitFraction = 1;
+      _registerMiss();
       _fail();
       return;
     }
     final next = pending.first;
     if (next.event.lane != lane) {
+      _lastHitLane = lane;
+      lastHitFraction = 1;
+      _registerMiss();
       _fail();
       return;
     }
     final f = _frac(next);
-    next.hit = true;
     _lastHitLane = lane;
     lastHitFraction = f.clamp(0.0, 1.0);
-    _registerHit(_grade(f));
+    final judgment = _grade(f);
+    if (next.event.isHold) {
+      next.state = ActiveNoteState.holding;
+      next.pressJudgment = judgment;
+      laneHeld[lane] = true;
+      _setFeedback(judgment);
+    } else {
+      next.state = ActiveNoteState.resolved;
+      _registerHit(judgment);
+    }
   }
 
   void _fail() {
@@ -268,7 +353,7 @@ class GameController extends ChangeNotifier {
     return Judgment.good;
   }
 
-  void _registerHit(Judgment j) {
+  void _registerHit(Judgment j, {bool holdBonus = false}) {
     switch (j) {
       case Judgment.perfect:
         _perfect++;
@@ -285,7 +370,8 @@ class GameController extends ChangeNotifier {
 
     _combo++;
     _maxCombo = math.max(_maxCombo, _combo);
-    _score += (j.baseScore * comboMultiplier).round();
+    final points = j.baseScore + (holdBonus ? 60 : 0);
+    _score += (points * comboMultiplier).round();
     _setFeedback(j);
   }
 
@@ -322,15 +408,15 @@ class GameController extends ChangeNotifier {
   }
 
   ScoreResult buildResult() => ScoreResult(
-        songId: _song.id,
-        score: _score,
-        accuracy: accuracy,
-        maxCombo: _maxCombo,
-        perfect: _perfect,
-        great: _great,
-        good: _good,
-        miss: _miss,
-        totalNotes: _song.noteCount,
-        timestamp: DateTime.now(),
-      );
+    songId: _song.id,
+    score: _score,
+    accuracy: accuracy,
+    maxCombo: _maxCombo,
+    perfect: _perfect,
+    great: _great,
+    good: _good,
+    miss: _miss,
+    totalNotes: _song.noteCount,
+    timestamp: DateTime.now(),
+  );
 }

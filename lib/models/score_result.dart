@@ -43,28 +43,28 @@ class ScoreResult {
   }
 
   factory ScoreResult.fromJson(Map<String, dynamic> json) => ScoreResult(
-        songId: json['song_id'] as String,
-        score: json['score'] as int,
-        accuracy: (json['accuracy'] as num).toDouble(),
-        maxCombo: json['combo'] as int,
-        perfect: json['perfect'] as int? ?? 0,
-        great: json['great'] as int? ?? 0,
-        good: json['good'] as int? ?? 0,
-        miss: json['miss'] as int? ?? 0,
-        totalNotes: json['total_notes'] as int? ?? 0,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-      );
+    songId: json['song_id'] as String,
+    score: json['score'] as int,
+    accuracy: (json['accuracy'] as num).toDouble(),
+    maxCombo: json['combo'] as int,
+    perfect: json['perfect'] as int? ?? 0,
+    great: json['great'] as int? ?? 0,
+    good: json['good'] as int? ?? 0,
+    miss: json['miss'] as int? ?? 0,
+    totalNotes: json['total_notes'] as int? ?? 0,
+    timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
+  );
 
   Map<String, dynamic> toJson() => {
-        'song_id': songId,
-        'score': score,
-        'accuracy': accuracy,
-        'combo': maxCombo,
-        'perfect': perfect,
-        'great': great,
-        'good': good,
-        'miss': miss,
-        'total_notes': totalNotes,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-      };
+    'song_id': songId,
+    'score': score,
+    'accuracy': accuracy,
+    'combo': maxCombo,
+    'perfect': perfect,
+    'great': great,
+    'good': good,
+    'miss': miss,
+    'total_notes': totalNotes,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+  };
 }

@@ -38,7 +38,8 @@ class SettingsProvider extends ChangeNotifier {
     _noteSpeed = _prefs.getDouble('set_note_speed') ?? 1.0;
     _leftHandMode = _prefs.getBool('set_left_hand') ?? false;
     _preferredDifficulty = DifficultyX.fromName(
-        _prefs.getString('set_difficulty') ?? Difficulty.normal.name);
+      _prefs.getString('set_difficulty') ?? Difficulty.normal.name,
+    );
     _gameMode = (_prefs.getString('set_game_mode') == 'classic')
         ? GameMode.classic
         : GameMode.song;

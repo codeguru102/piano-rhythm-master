@@ -1,11 +1,11 @@
 {
-    "name": "piano_rhythm_master",
-    "short_name": "piano_rhythm_master",
+    "name": "Piano Rhythm Master",
+    "short_name": "Rhythm Master",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#070812",
+    "theme_color": "#070812",
+    "description": "A premium piano rhythm game where every tap becomes light.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

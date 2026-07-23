@@ -5,7 +5,11 @@ import '../theme/app_theme.dart';
 
 /// Colored difficulty pill (Easy/Normal/Hard/Expert).
 class DifficultyBadge extends StatelessWidget {
-  const DifficultyBadge({super.key, required this.difficulty, this.compact = false});
+  const DifficultyBadge({
+    super.key,
+    required this.difficulty,
+    this.compact = false,
+  });
 
   final Difficulty difficulty;
   final bool compact;
@@ -15,7 +19,9 @@ class DifficultyBadge extends StatelessWidget {
     final c = difficulty.color;
     return Container(
       padding: EdgeInsets.symmetric(
-          horizontal: compact ? 8 : 11, vertical: compact ? 3 : 5),
+        horizontal: compact ? 8 : 11,
+        vertical: compact ? 3 : 5,
+      ),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(AppRadii.pill),

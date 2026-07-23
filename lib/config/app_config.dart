@@ -15,8 +15,10 @@ class AppConfig {
   const AppConfig._();
 
   /// text2midi generation endpoint. Empty when not configured.
-  static const String midiApiUrl =
-      String.fromEnvironment('MIDI_API_URL', defaultValue: '');
+  static const String midiApiUrl = String.fromEnvironment(
+    'MIDI_API_URL',
+    defaultValue: '',
+  );
 
   static bool get hasMidiApi => midiApiUrl.trim().isNotEmpty;
 }

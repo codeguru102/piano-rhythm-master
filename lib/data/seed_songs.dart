@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../models/note_event.dart';
 import '../models/song.dart';
 
@@ -46,11 +48,35 @@ List<NoteEvent> _gen({
     t += stepDur;
     i++;
   }
-  return notes;
+  // Turn selected spacious notes into authored sustains. A hold is only added
+  // when the same lane stays clear, so every generated chart remains playable.
+  return [
+    for (var noteIndex = 0; noteIndex < notes.length; noteIndex++)
+      () {
+        final note = notes[noteIndex];
+        double nextSameLane = double.infinity;
+        for (var next = noteIndex + 1; next < notes.length; next++) {
+          if (notes[next].lane == note.lane) {
+            nextSameLane = notes[next].time;
+            break;
+          }
+        }
+        final available = nextSameLane - note.time - 0.28;
+        final selected = noteIndex > 4 && (noteIndex + note.lane * 3) % 13 == 0;
+        if (!selected || available < 0.62) return note;
+        final hold = math.min(available, 0.72 + (noteIndex % 3) * 0.16);
+        return NoteEvent(note.time, note.lane, duration: hold);
+      }(),
+  ];
 }
 
 double _durationOf(List<NoteEvent> notes) =>
-    (notes.isEmpty ? _leadIn : notes.last.time) + _tail;
+    (notes.isEmpty
+        ? _leadIn
+        : notes
+              .map((note) => note.time + note.duration)
+              .reduce((a, b) => math.max(a, b))) +
+    _tail;
 
 Song _song({
   required String id,
@@ -125,7 +151,32 @@ final List<Song> kSeedSongs = [
     difficulty: Difficulty.hard,
     bpm: 140,
     stepsPerBeat: 2,
-    pattern: [0, 1, 2, 3, 4, 3, 2, 1, 0, 2, 4, 2, 1, 3, 0, 4, 2, 0, 3, 1, 4, 2, 0, 1],
+    pattern: [
+      0,
+      1,
+      2,
+      3,
+      4,
+      3,
+      2,
+      1,
+      0,
+      2,
+      4,
+      2,
+      1,
+      3,
+      0,
+      4,
+      2,
+      0,
+      3,
+      1,
+      4,
+      2,
+      0,
+      1,
+    ],
     targetSeconds: 52,
   ),
   _song(
@@ -147,7 +198,32 @@ final List<Song> kSeedSongs = [
     difficulty: Difficulty.expert,
     bpm: 160,
     stepsPerBeat: 4,
-    pattern: [0, 4, 2, 4, 1, 3, 0, 2, 4, 2, 3, 1, 0, 2, 4, 3, 1, 3, 2, 0, 4, 2, 1, 0],
+    pattern: [
+      0,
+      4,
+      2,
+      4,
+      1,
+      3,
+      0,
+      2,
+      4,
+      2,
+      3,
+      1,
+      0,
+      2,
+      4,
+      3,
+      1,
+      3,
+      2,
+      0,
+      4,
+      2,
+      1,
+      0,
+    ],
     targetSeconds: 55,
   ),
   _song(
@@ -169,7 +245,32 @@ final List<Song> kSeedSongs = [
     difficulty: Difficulty.normal,
     bpm: 118,
     stepsPerBeat: 2,
-    pattern: [0, 2, 1, 3, 4, 2, 3, 1, 2, 4, 3, 1, 0, 2, 4, 2, 1, 3, 2, 0, 3, 1, 2, 4],
+    pattern: [
+      0,
+      2,
+      1,
+      3,
+      4,
+      2,
+      3,
+      1,
+      2,
+      4,
+      3,
+      1,
+      0,
+      2,
+      4,
+      2,
+      1,
+      3,
+      2,
+      0,
+      3,
+      1,
+      2,
+      4,
+    ],
     targetSeconds: 50,
   ),
   _song(
@@ -180,7 +281,32 @@ final List<Song> kSeedSongs = [
     difficulty: Difficulty.hard,
     bpm: 148,
     stepsPerBeat: 2,
-    pattern: [4, 3, 2, 1, 0, 1, 2, 3, 4, 2, 0, 2, 4, 1, 3, 0, 2, 4, 3, 1, 0, 2, 1, 4],
+    pattern: [
+      4,
+      3,
+      2,
+      1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      2,
+      0,
+      2,
+      4,
+      1,
+      3,
+      0,
+      2,
+      4,
+      3,
+      1,
+      0,
+      2,
+      1,
+      4,
+    ],
     targetSeconds: 52,
   ),
   _song(
@@ -191,7 +317,32 @@ final List<Song> kSeedSongs = [
     difficulty: Difficulty.normal,
     bpm: 126,
     stepsPerBeat: 2,
-    pattern: [2, 4, 3, 1, 0, 2, 4, 2, 1, 3, 0, 2, 4, 3, 2, 0, 1, 3, 4, 2, 0, 2, 3, 1],
+    pattern: [
+      2,
+      4,
+      3,
+      1,
+      0,
+      2,
+      4,
+      2,
+      1,
+      3,
+      0,
+      2,
+      4,
+      3,
+      2,
+      0,
+      1,
+      3,
+      4,
+      2,
+      0,
+      2,
+      3,
+      1,
+    ],
     targetSeconds: 50,
   ),
   _song(
@@ -202,7 +353,32 @@ final List<Song> kSeedSongs = [
     difficulty: Difficulty.expert,
     bpm: 172,
     stepsPerBeat: 4,
-    pattern: [0, 2, 4, 3, 1, 3, 2, 4, 0, 1, 2, 3, 4, 3, 2, 1, 0, 2, 4, 2, 1, 3, 0, 4],
+    pattern: [
+      0,
+      2,
+      4,
+      3,
+      1,
+      3,
+      2,
+      4,
+      0,
+      1,
+      2,
+      3,
+      4,
+      3,
+      2,
+      1,
+      0,
+      2,
+      4,
+      2,
+      1,
+      3,
+      0,
+      4,
+    ],
     targetSeconds: 56,
   ),
 ];

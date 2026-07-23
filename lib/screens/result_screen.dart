@@ -63,27 +63,36 @@ class _ResultScreenState extends State<ResultScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.panel,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.lg)),
-        title: const Text('Achievement Unlocked!',
-            style: TextStyle(color: AppColors.textHi, fontSize: 18)),
+          borderRadius: BorderRadius.circular(AppRadii.lg),
+        ),
+        title: const Text(
+          'Achievement Unlocked!',
+          style: TextStyle(color: AppColors.textHi, fontSize: 18),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             for (final a in widget.unlocked)
               ListTile(
                 leading: Icon(a.icon, color: a.color, size: 30),
-                title: Text(a.title,
-                    style: const TextStyle(color: AppColors.textHi)),
-                subtitle: Text(a.description,
-                    style: const TextStyle(color: AppColors.textMid)),
+                title: Text(
+                  a.title,
+                  style: const TextStyle(color: AppColors.textHi),
+                ),
+                subtitle: Text(
+                  a.description,
+                  style: const TextStyle(color: AppColors.textMid),
+                ),
               ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Nice!',
-                style: TextStyle(color: AppColors.neonPurple)),
+            child: const Text(
+              'Nice!',
+              style: TextStyle(color: AppColors.neonPurple),
+            ),
           ),
         ],
       ),
@@ -95,13 +104,15 @@ class _ResultScreenState extends State<ResultScreen> {
     final idx = songs.indexWhere((s) => s.id == widget.song.id);
     final next = songs[(idx + 1) % songs.length];
     if (!mounted) return;
-    Navigator.of(context)
-        .pushReplacement(AppRoutes.fadeSlide(GameScreen(song: next)));
+    Navigator.of(
+      context,
+    ).pushReplacement(AppRoutes.fadeSlide(GameScreen(song: next)));
   }
 
   void _retry() {
-    Navigator.of(context)
-        .pushReplacement(AppRoutes.fadeSlide(GameScreen(song: widget.song)));
+    Navigator.of(
+      context,
+    ).pushReplacement(AppRoutes.fadeSlide(GameScreen(song: widget.song)));
   }
 
   void _share() {
@@ -133,27 +144,33 @@ class _ResultScreenState extends State<ResultScreen> {
                         'GAME OVER',
                         gradient: AppGradients.royal,
                         style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1),
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                        ),
                       ),
                       const SizedBox(height: 6),
                     ],
                     Text(
                       widget.song.title,
                       style: const TextStyle(
-                          color: AppColors.textMid, fontSize: 16),
+                        color: AppColors.textMid,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     _rankBadge(r.rank),
                     const SizedBox(height: AppSpace.md),
                     _stars(r.stars),
                     const SizedBox(height: AppSpace.md),
-                    const Text('SCORE',
-                        style: TextStyle(
-                            color: AppColors.textLow,
-                            fontSize: 13,
-                            letterSpacing: 2)),
+                    const Text(
+                      'SCORE',
+                      style: TextStyle(
+                        color: AppColors.textLow,
+                        fontSize: 13,
+                        letterSpacing: 2,
+                      ),
+                    ),
                     _animatedScore(r.score),
                     const SizedBox(height: AppSpace.lg),
                     _statsCard(r),
@@ -183,7 +200,10 @@ class _ResultScreenState extends State<ResultScreen> {
                       children: [
                         Expanded(
                           child: _outlineButton(
-                              Icons.share_rounded, 'Share', _share),
+                            Icons.share_rounded,
+                            'Share',
+                            _share,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -224,28 +244,30 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Widget _rankBadge(String rank) {
     return Container(
-      width: 92,
-      height: 92,
-      decoration: BoxDecoration(
-        gradient: AppGradients.gold,
-        shape: BoxShape.circle,
-        boxShadow: glow(AppColors.gold, blur: 40, opacity: 0.7),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        rank,
-        style: const TextStyle(
-            color: Color(0xFF3A2A00),
-            fontSize: 50,
-            fontWeight: FontWeight.w600),
-      ),
-    )
+          width: 92,
+          height: 92,
+          decoration: BoxDecoration(
+            gradient: AppGradients.gold,
+            shape: BoxShape.circle,
+            boxShadow: glow(AppColors.gold, blur: 40, opacity: 0.7),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            rank,
+            style: const TextStyle(
+              color: Color(0xFF3A2A00),
+              fontSize: 50,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        )
         .animate()
         .scale(
-            duration: 600.ms,
-            curve: Curves.easeOutBack,
-            begin: const Offset(0.3, 0.3),
-            end: const Offset(1, 1))
+          duration: 600.ms,
+          curve: Curves.easeOutBack,
+          begin: const Offset(0.3, 0.3),
+          end: const Offset(1, 1),
+        )
         .fadeIn();
   }
 
@@ -261,15 +283,13 @@ class _ResultScreenState extends State<ResultScreen> {
             shadows: i < count
                 ? [const Shadow(color: AppColors.gold, blurRadius: 16)]
                 : null,
-          )
-              .animate()
-              .scale(
-                delay: (300 + i * 180).ms,
-                duration: 420.ms,
-                curve: Curves.easeOutBack,
-                begin: const Offset(0.2, 0.2),
-                end: const Offset(1, 1),
-              ),
+          ).animate().scale(
+            delay: (300 + i * 180).ms,
+            duration: 420.ms,
+            curve: Curves.easeOutBack,
+            begin: const Offset(0.2, 0.2),
+            end: const Offset(1, 1),
+          ),
       ],
     );
   }
@@ -297,8 +317,11 @@ class _ResultScreenState extends State<ResultScreen> {
       glowColor: AppColors.neonPurple,
       child: Column(
         children: [
-          _statRow('Accuracy', '${r.accuracy.toStringAsFixed(1)}%',
-              AppColors.neonCyan),
+          _statRow(
+            'Accuracy',
+            '${r.accuracy.toStringAsFixed(1)}%',
+            AppColors.neonCyan,
+          ),
           _statRow('Max Combo', '${r.maxCombo}', AppColors.neonPink),
           const Divider(color: AppColors.stroke, height: 24),
           _statRow('Perfect', '${r.perfect}', AppColors.perfect),
@@ -316,11 +339,18 @@ class _ResultScreenState extends State<ResultScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(color: AppColors.textMid, fontSize: 15)),
-          Text(value,
-              style: TextStyle(
-                  color: color, fontSize: 16, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textMid, fontSize: 15),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -341,11 +371,14 @@ class _ResultScreenState extends State<ResultScreen> {
           children: [
             Icon(icon, color: AppColors.textHi, size: 20),
             const SizedBox(width: 8),
-            Text(label,
-                style: const TextStyle(
-                    color: AppColors.textHi,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textHi,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

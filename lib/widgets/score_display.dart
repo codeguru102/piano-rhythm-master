@@ -34,8 +34,11 @@ class ScoreDisplay extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _chip(Icons.percent_rounded, '${accuracy.toStringAsFixed(1)}%',
-                AppColors.neonCyan),
+            _chip(
+              Icons.percent_rounded,
+              '${accuracy.toStringAsFixed(1)}%',
+              AppColors.neonCyan,
+            ),
             const SizedBox(width: 12),
             _combo(),
           ],
@@ -52,8 +55,11 @@ class ScoreDisplay extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.bolt_rounded,
-              color: on ? AppColors.neonPink : AppColors.textLow, size: 18),
+          Icon(
+            Icons.bolt_rounded,
+            color: on ? AppColors.neonPink : AppColors.textLow,
+            size: 18,
+          ),
           const SizedBox(width: 2),
           Text(
             on ? '$combo combo' : '—',
@@ -85,9 +91,14 @@ class ScoreDisplay extends StatelessWidget {
       children: [
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 3),
-        Text(text,
-            style: TextStyle(
-                color: color, fontSize: 15, fontWeight: FontWeight.w500)),
+        Text(
+          text,
+          style: TextStyle(
+            color: color,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }

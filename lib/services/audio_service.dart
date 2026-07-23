@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 
 import '../data/seed_songs.dart';
 
@@ -23,12 +26,30 @@ class AudioService {
   }
 
   void _play(String asset, double volume) {
-    if (!sfxEnabled) return;
+    if (!sfxEnabled || _pool.isEmpty) return;
     final p = _pool[_idx];
     _idx = (_idx + 1) % _pool.length;
-    // Fire-and-forget; play() sets the source and starts playback.
-    p.stop();
-    p.play(AssetSource(asset), volume: (volume * sfxVolume).clamp(0.0, 1.0));
+    unawaited(_playSafely(p, asset, volume));
+  }
+
+  Future<void> _playSafely(
+    AudioPlayer player,
+    String asset,
+    double volume,
+  ) async {
+    try {
+      // Keep stop/source/play ordered. Starting both futures together can race
+      // on the first note while the native player is still being prepared.
+      await player.stop();
+      await player.play(
+        AssetSource(asset),
+        volume: (volume * sfxVolume).clamp(0.0, 1.0),
+      );
+    } catch (error) {
+      // Audio is supporting feedback. A device/audio-session problem should
+      // never interrupt scoring or take the player out of the game.
+      debugPrint('Unable to play $asset: $error');
+    }
   }
 
   void playLane(int lane) {

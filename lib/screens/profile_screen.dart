@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../app.dart';
 import '../models/achievement.dart';
 import '../models/user_profile.dart';
 import '../state/profile_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_background.dart';
 import '../widgets/gradient_text.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  static const _avatars = ['🎧', '🎹', '🎸', '🎤', '🥁', '🎺', '🦊', '🐼', '👾', '⭐'];
+  static const _avatars = [
+    '🎧',
+    '🎹',
+    '🎸',
+    '🎤',
+    '🥁',
+    '🎺',
+    '🦊',
+    '🐼',
+    '👾',
+    '⭐',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +39,8 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _profileTopBar(context),
+                const SizedBox(height: AppSpace.lg),
                 _headerCard(context, provider, p),
                 const SizedBox(height: AppSpace.lg),
                 const _SectionTitle('Statistics'),
@@ -43,8 +58,32 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _profileTopBar(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(
+          child: Text('Profile', style: AppTextStyles.screenTitle),
+        ),
+        Semantics(
+          label: 'Open settings',
+          button: true,
+          child: IconButton.filledTonal(
+            tooltip: 'Settings',
+            onPressed: () => Navigator.of(
+              context,
+            ).push(AppRoutes.fadeSlide(const SettingsScreen())),
+            icon: const Icon(Icons.settings_rounded),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _headerCard(
-      BuildContext context, ProfileProvider provider, UserProfile p) {
+    BuildContext context,
+    ProfileProvider provider,
+    UserProfile p,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpace.lg),
@@ -78,19 +117,25 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   p.username,
                   style: const TextStyle(
-                      color: AppColors.textHi,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600),
+                    color: AppColors.textHi,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(width: 6),
-                const Icon(Icons.edit_rounded,
-                    color: AppColors.textLow, size: 18),
+                const Icon(
+                  Icons.edit_rounded,
+                  color: AppColors.textLow,
+                  size: 18,
+                ),
               ],
             ),
           ),
           const SizedBox(height: 4),
-          Text('Level ${p.level}  •  ${p.experience} XP',
-              style: const TextStyle(color: AppColors.textMid, fontSize: 14)),
+          Text(
+            'Level ${p.level}  •  ${p.experience} XP',
+            style: const TextStyle(color: AppColors.textMid, fontSize: 14),
+          ),
           const SizedBox(height: AppSpace.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -113,16 +158,36 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _statsGrid(UserProfile p) {
     final stats = [
-      (Icons.queue_music_rounded, 'Songs Played', '${p.totalSongsPlayed}',
-          AppColors.neonBlue),
-      (Icons.emoji_events_rounded, 'Highest Score', '${p.highestScore}',
-          AppColors.good),
-      (Icons.bolt_rounded, 'Best Combo', '${p.highestCombo}',
-          AppColors.neonPink),
-      (Icons.percent_rounded, 'Best Accuracy',
-          '${p.bestAccuracy.toStringAsFixed(1)}%', AppColors.neonCyan),
-      (Icons.favorite_rounded, 'Favorites', '${p.favorites.length}',
-          AppColors.neonPurple),
+      (
+        Icons.queue_music_rounded,
+        'Songs Played',
+        '${p.totalSongsPlayed}',
+        AppColors.neonBlue,
+      ),
+      (
+        Icons.emoji_events_rounded,
+        'Highest Score',
+        '${p.highestScore}',
+        AppColors.good,
+      ),
+      (
+        Icons.bolt_rounded,
+        'Best Combo',
+        '${p.highestCombo}',
+        AppColors.neonPink,
+      ),
+      (
+        Icons.percent_rounded,
+        'Best Accuracy',
+        '${p.bestAccuracy.toStringAsFixed(1)}%',
+        AppColors.neonCyan,
+      ),
+      (
+        Icons.favorite_rounded,
+        'Favorites',
+        '${p.favorites.length}',
+        AppColors.neonPurple,
+      ),
       (Icons.stars_rounded, 'Coins', '${p.coins}', AppColors.expert),
     ];
 
@@ -151,16 +216,23 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(s.$3,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: AppColors.textHi,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600)),
-                      Text(s.$2,
-                          style: const TextStyle(
-                              color: AppColors.textMid, fontSize: 11)),
+                      Text(
+                        s.$3,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textHi,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        s.$2,
+                        style: const TextStyle(
+                          color: AppColors.textMid,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -188,7 +260,8 @@ class ProfileScreen extends StatelessWidget {
         color: AppColors.panel,
         borderRadius: BorderRadius.circular(AppRadii.md),
         border: Border.all(
-            color: unlocked ? a.color.withValues(alpha: 0.5) : AppColors.stroke),
+          color: unlocked ? a.color.withValues(alpha: 0.5) : AppColors.stroke,
+        ),
       ),
       child: Row(
         children: [
@@ -201,28 +274,41 @@ class ProfileScreen extends StatelessWidget {
                   : AppColors.panelHi,
               shape: BoxShape.circle,
             ),
-            child: Icon(unlocked ? a.icon : Icons.lock_rounded,
-                color: unlocked ? a.color : AppColors.textLow, size: 24),
+            child: Icon(
+              unlocked ? a.icon : Icons.lock_rounded,
+              color: unlocked ? a.color : AppColors.textLow,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(a.title,
-                    style: TextStyle(
-                        color: unlocked ? AppColors.textHi : AppColors.textMid,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600)),
-                Text(a.description,
-                    style: const TextStyle(
-                        color: AppColors.textLow, fontSize: 12)),
+                Text(
+                  a.title,
+                  style: TextStyle(
+                    color: unlocked ? AppColors.textHi : AppColors.textMid,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  a.description,
+                  style: const TextStyle(
+                    color: AppColors.textLow,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
           if (unlocked)
-            const Icon(Icons.check_circle_rounded,
-                color: AppColors.easy, size: 22),
+            const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.easy,
+              size: 22,
+            ),
         ],
       ),
     );
@@ -267,32 +353,42 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _editName(
-      BuildContext context, ProfileProvider provider, UserProfile p) {
+    BuildContext context,
+    ProfileProvider provider,
+    UserProfile p,
+  ) {
     final controller = TextEditingController(text: p.username);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.panel,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.lg)),
-        title: const Text('Edit Username',
-            style: TextStyle(color: AppColors.textHi, fontSize: 18)),
+          borderRadius: BorderRadius.circular(AppRadii.lg),
+        ),
+        title: const Text(
+          'Edit Username',
+          style: TextStyle(color: AppColors.textHi, fontSize: 18),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
           style: const TextStyle(color: AppColors.textHi),
           decoration: const InputDecoration(
             enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.stroke)),
+              borderSide: BorderSide(color: AppColors.stroke),
+            ),
             focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.neonPurple)),
+              borderSide: BorderSide(color: AppColors.neonPurple),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textMid)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textMid),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -300,8 +396,10 @@ class ProfileScreen extends StatelessWidget {
               if (name.isNotEmpty) provider.updateIdentity(username: name);
               Navigator.of(context).pop();
             },
-            child: const Text('Save',
-                style: TextStyle(color: AppColors.neonPurple)),
+            child: const Text(
+              'Save',
+              style: TextStyle(color: AppColors.neonPurple),
+            ),
           ),
         ],
       ),
@@ -315,8 +413,10 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GradientText(text,
-        gradient: AppGradients.aurora,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600));
+    return GradientText(
+      text,
+      gradient: AppGradients.aurora,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+    );
   }
 }

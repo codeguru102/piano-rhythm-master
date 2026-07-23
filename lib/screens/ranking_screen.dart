@@ -45,8 +45,8 @@ class _RankingScreenState extends State<RankingScreen> {
             builder: (context, snap) {
               if (!snap.hasData) {
                 return const Center(
-                    child:
-                        CircularProgressIndicator(color: AppColors.neonPurple));
+                  child: CircularProgressIndicator(color: AppColors.neonPurple),
+                );
               }
               final (scores, songs) = snap.data!;
               if (scores.isEmpty) return const _Empty();
@@ -77,7 +77,8 @@ class _RankingScreenState extends State<RankingScreen> {
         gradient: AppGradients.panel,
         borderRadius: BorderRadius.circular(AppRadii.md),
         border: Border.all(
-            color: rank <= 3 ? medal.withValues(alpha: 0.5) : AppColors.stroke),
+          color: rank <= 3 ? medal.withValues(alpha: 0.5) : AppColors.stroke,
+        ),
       ),
       child: Row(
         children: [
@@ -85,37 +86,48 @@ class _RankingScreenState extends State<RankingScreen> {
             width: 34,
             child: rank <= 3
                 ? Icon(Icons.emoji_events_rounded, color: medal, size: 26)
-                : Text('#$rank',
+                : Text(
+                    '#$rank',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                        color: AppColors.textMid,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600)),
+                      color: AppColors.textMid,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(song?.title ?? r.songId,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AppColors.textHi,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600)),
-                Text('${r.accuracy.toStringAsFixed(1)}% • ${r.maxCombo}x combo',
-                    style: const TextStyle(
-                        color: AppColors.textMid, fontSize: 12)),
+                Text(
+                  song?.title ?? r.songId,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textHi,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '${r.accuracy.toStringAsFixed(1)}% • ${r.maxCombo}x combo',
+                  style: const TextStyle(
+                    color: AppColors.textMid,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
           Text(
             '${r.score}',
             style: const TextStyle(
-                color: AppColors.good,
-                fontSize: 17,
-                fontWeight: FontWeight.w600),
+              color: AppColors.good,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -134,8 +146,10 @@ class _Empty extends StatelessWidget {
         children: [
           Icon(Icons.leaderboard_rounded, color: AppColors.textLow, size: 48),
           SizedBox(height: 12),
-          Text('No scores yet — play a song!',
-              style: TextStyle(color: AppColors.textMid, fontSize: 15)),
+          Text(
+            'No scores yet — play a song!',
+            style: TextStyle(color: AppColors.textMid, fontSize: 15),
+          ),
         ],
       ),
     );

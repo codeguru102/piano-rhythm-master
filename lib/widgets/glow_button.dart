@@ -3,8 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../theme/app_theme.dart';
 
-/// A glowing, gradient, press-animated button with a periodic shine sweep —
-/// the app's primary dazzling CTA style.
+/// Primary product action with accessible focus, keyboard, and press states.
 class GlowButton extends StatefulWidget {
   const GlowButton({
     super.key,
@@ -34,24 +33,36 @@ class GlowButton extends StatefulWidget {
 }
 
 class _GlowButtonState extends State<GlowButton> {
-  bool _down = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null;
-    final glowClr = widget.glowColor ?? widget.gradient.colors[1];
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final glowColor = widget.glowColor ?? widget.gradient.colors.last;
 
-    Widget container = Container(
+    Widget surface = Container(
       height: widget.height,
       width: widget.expand ? double.infinity : null,
-      padding:
-          widget.expand ? null : const EdgeInsets.symmetric(horizontal: 26),
+      padding: widget.expand
+          ? null
+          : const EdgeInsets.symmetric(horizontal: AppSpace.lg),
       decoration: BoxDecoration(
-        gradient: widget.gradient,
+        gradient: enabled ? widget.gradient : null,
+        color: enabled ? null : AppColors.interactive,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: enabled
+              ? Colors.white.withValues(alpha: 0.22)
+              : AppColors.stroke,
+        ),
         boxShadow: enabled
-            ? glow(glowClr, blur: _down ? 14 : 30, opacity: 0.6)
+            ? glow(
+                glowColor,
+                blur: _pressed ? 12 : 22,
+                opacity: _pressed ? 0.18 : 0.34,
+              )
             : null,
       ),
       child: Row(
@@ -59,19 +70,19 @@ class _GlowButtonState extends State<GlowButton> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.icon != null) ...[
-            Icon(widget.icon, color: Colors.white, size: widget.fontSize + 5),
-            const SizedBox(width: 10),
+            Icon(widget.icon, color: Colors.white, size: widget.fontSize + 4),
+            const SizedBox(width: AppSpace.xs),
           ],
           Flexible(
             child: Text(
               widget.label,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.white,
+                color: enabled ? Colors.white : AppColors.textLow,
                 fontSize: widget.fontSize,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.6,
-                shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
+                letterSpacing: 0.25,
               ),
             ),
           ),
@@ -79,32 +90,42 @@ class _GlowButtonState extends State<GlowButton> {
       ),
     );
 
-    if (widget.shine && enabled) {
-      container = container
-          .animate(onPlay: (c) => c.repeat())
-          .shimmer(
-            duration: 2400.ms,
-            delay: 1200.ms,
-            color: Colors.white.withValues(alpha: 0.35),
-          );
+    // A single entrance sweep adds polish without permanent visual noise.
+    if (widget.shine && enabled && !reduceMotion) {
+      surface = surface.animate().shimmer(
+        delay: 480.ms,
+        duration: 850.ms,
+        color: Colors.white.withValues(alpha: 0.3),
+      );
     }
 
-    return GestureDetector(
-      onTapDown: enabled ? (_) => setState(() => _down = true) : null,
-      onTapCancel: enabled ? () => setState(() => _down = false) : null,
-      onTapUp: enabled
-          ? (_) {
-              setState(() => _down = false);
-              widget.onPressed!();
-            }
-          : null,
-      child: AnimatedScale(
-        scale: _down ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 90),
-        child: AnimatedOpacity(
-          opacity: enabled ? 1 : 0.5,
-          duration: const Duration(milliseconds: 150),
-          child: container,
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: enabled,
+      label: widget.label,
+      child: ExcludeSemantics(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onPressed,
+            canRequestFocus: enabled,
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            onHighlightChanged: (highlighted) {
+              if (_pressed == highlighted) return;
+              setState(() => _pressed = highlighted);
+            },
+            child: AnimatedScale(
+              scale: _pressed ? 0.97 : 1,
+              duration: reduceMotion ? Duration.zero : AppMotion.touch,
+              curve: AppMotion.standard,
+              child: AnimatedOpacity(
+                opacity: enabled ? 1 : 0.55,
+                duration: AppMotion.state,
+                child: surface,
+              ),
+            ),
+          ),
         ),
       ),
     );

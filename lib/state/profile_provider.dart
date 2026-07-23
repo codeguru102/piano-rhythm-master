@@ -48,8 +48,10 @@ class ProfileProvider extends ChangeNotifier {
     final before = _profile.achievements;
 
     final newBest = Map<String, int>.from(_profile.bestScores);
-    newBest[result.songId] =
-        math.max(newBest[result.songId] ?? 0, result.score);
+    newBest[result.songId] = math.max(
+      newBest[result.songId] ?? 0,
+      result.score,
+    );
 
     final xpGain = (result.score / 8).round() + result.perfect;
     final coinGain = result.stars * 25 + result.hits ~/ 4;

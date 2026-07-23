@@ -4,7 +4,8 @@ import 'dart:typed_data';
 class MidiNote {
   final double time; // seconds from start
   final int pitch; // MIDI note number (0..127)
-  const MidiNote(this.time, this.pitch);
+  final double duration; // seconds until note-off, when available
+  const MidiNote(this.time, this.pitch, {this.duration = 0});
 }
 
 /// Result of parsing a Standard MIDI File.
@@ -56,6 +57,7 @@ class MidiParser {
     final tempoTicks = <int>[];
     final tempoUs = <int>[];
     final noteTicks = <int>[];
+    final noteEndTicks = <int>[];
     final notePitches = <int>[];
 
     for (var t = 0; t < ntrks; t++) {
@@ -69,6 +71,14 @@ class MidiParser {
       }
       int abs = 0;
       int runningStatus = 0;
+      final activeNotes = <int, List<int>>{};
+
+      void endNote(int channel, int pitch) {
+        final starts = activeNotes[channel * 128 + pitch];
+        if (starts == null || starts.isEmpty) return;
+        noteEndTicks[starts.removeAt(0)] = abs;
+      }
+
       while (r.pos < end) {
         abs += r.readVarLen();
         int status = r.peek();
@@ -84,7 +94,9 @@ class MidiParser {
           final metaLen = r.readVarLen();
           if (type == 0x51 && metaLen == 3) {
             tempoTicks.add(abs);
-            tempoUs.add((r.readByte() << 16) | (r.readByte() << 8) | r.readByte());
+            tempoUs.add(
+              (r.readByte() << 16) | (r.readByte() << 8) | r.readByte(),
+            );
           } else {
             r.skip(metaLen);
           }
@@ -95,9 +107,18 @@ class MidiParser {
           final vel = r.readByte();
           if (vel > 0) {
             noteTicks.add(abs);
+            noteEndTicks.add(abs);
             notePitches.add(pitch);
+            final key = (status & 0x0F) * 128 + pitch;
+            activeNotes.putIfAbsent(key, () => []).add(noteTicks.length - 1);
+          } else {
+            endNote(status & 0x0F, pitch);
           }
-        } else if (hi == 0x80 || hi == 0xA0 || hi == 0xB0 || hi == 0xE0) {
+        } else if (hi == 0x80) {
+          final pitch = r.readByte();
+          r.readByte();
+          endNote(status & 0x0F, pitch);
+        } else if (hi == 0xA0 || hi == 0xB0 || hi == 0xE0) {
           r.readByte();
           r.readByte();
         } else if (hi == 0xC0 || hi == 0xD0) {
@@ -146,7 +167,13 @@ class MidiParser {
 
     final notes = <MidiNote>[
       for (var i = 0; i < noteTicks.length; i++)
-        MidiNote(tickToSeconds(noteTicks[i]), notePitches[i]),
+        MidiNote(
+          tickToSeconds(noteTicks[i]),
+          notePitches[i],
+          duration:
+              (tickToSeconds(noteEndTicks[i]) - tickToSeconds(noteTicks[i]))
+                  .clamp(0, double.infinity),
+        ),
     ]..sort((a, b) => a.time.compareTo(b.time));
 
     final bpm = smpte ? 120 : (60000000 / segUs.first).round();

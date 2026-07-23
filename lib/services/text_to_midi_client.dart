@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -38,8 +39,9 @@ class TextToMidiClient {
     final url = baseUrl.trim();
     if (url.isEmpty) {
       throw const TextToMidiException(
-          'Generator endpoint not configured. Provide MIDI_API_URL via '
-          '--dart-define (see config/app_config.example.json).');
+        'Generator endpoint not configured. Provide MIDI_API_URL via '
+        '--dart-define (see config/app_config.example.json).',
+      );
     }
     if (prompt.trim().isEmpty) {
       throw const TextToMidiException('Enter a description for your song.');
@@ -63,14 +65,16 @@ class TextToMidiClient {
 
     if (res.statusCode != 200) {
       throw TextToMidiException(
-          'Generator returned ${res.statusCode}: ${_snippet(res.body)}');
+        'Generator returned ${res.statusCode}: ${_snippet(res.body)}',
+      );
     }
 
     final midiBytes = _extractMidi(res);
     final parsed = _parse(midiBytes);
     if (parsed.notes.isEmpty) {
       throw const TextToMidiException(
-          'The generated MIDI had no playable notes. Try a different prompt.');
+        'The generated MIDI had no playable notes. Try a different prompt.',
+      );
     }
 
     final beatMap = _toBeatMap(parsed);
@@ -81,7 +85,13 @@ class TextToMidiClient {
       artist: 'text2midi',
       coverSeed: prompt.hashCode & 0x7fffffff,
       difficulty: difficulty,
-      duration: (beatMap.isEmpty ? _leadIn : beatMap.last.time) + _tail,
+      duration:
+          (beatMap.isEmpty
+              ? _leadIn
+              : beatMap
+                    .map((note) => note.time + note.duration)
+                    .reduce(math.max)) +
+          _tail,
       bpm: parsed.bpm.clamp(40, 220),
       beatMap: beatMap,
     );
@@ -119,13 +129,30 @@ class TextToMidiClient {
 
     // 3. Normalize so the first note lands after the lead-in countdown.
     final first = spaced.first.time;
-    return [
-      for (final n in spaced)
+    final events = <NoteEvent>[];
+    for (var i = 0; i < spaced.length; i++) {
+      final note = spaced[i];
+      final lane = _laneForPitch(note.pitch);
+      double nextSameLane = double.infinity;
+      for (var next = i + 1; next < spaced.length; next++) {
+        if (_laneForPitch(spaced[next].pitch) == lane) {
+          nextSameLane = spaced[next].time;
+          break;
+        }
+      }
+      final available = nextSameLane - note.time - 0.16;
+      final duration = note.duration >= 0.5 && available >= 0.42
+          ? math.min(note.duration, available).clamp(0.42, 2.4)
+          : 0.0;
+      events.add(
         NoteEvent(
-          double.parse((n.time - first + _leadIn).toStringAsFixed(3)),
-          _laneForPitch(n.pitch),
+          double.parse((note.time - first + _leadIn).toStringAsFixed(3)),
+          lane,
+          duration: double.parse(duration.toStringAsFixed(3)),
         ),
-    ];
+      );
+    }
+    return events;
   }
 
   /// Quantize a MIDI pitch to the nearest of the 5 lane tones (C D E F G).
@@ -157,7 +184,8 @@ class TextToMidiClient {
     try {
       final decoded = jsonDecode(res.body);
       if (decoded is Map) {
-        final b64 = decoded['midi_base64'] ?? decoded['midi'] ?? decoded['data'];
+        final b64 =
+            decoded['midi_base64'] ?? decoded['midi'] ?? decoded['data'];
         if (b64 is String && b64.isNotEmpty) {
           return base64Decode(b64.replaceAll(RegExp(r'\s'), ''));
         }
@@ -166,7 +194,8 @@ class TextToMidiClient {
       // fall through to error below
     }
     throw TextToMidiException(
-        'Unexpected response (not MIDI or {midi_base64}): ${_snippet(res.body)}');
+      'Unexpected response (not MIDI or {midi_base64}): ${_snippet(res.body)}',
+    );
   }
 
   String _title(String prompt) {

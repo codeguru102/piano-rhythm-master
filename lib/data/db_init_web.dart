@@ -1,8 +1,3 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
-
-/// Web: back sqflite with the WASM SQLite build (IndexedDB-persisted).
-/// Requires the assets copied by `dart run sqflite_common_ffi_web:setup`.
-Future<void> initDatabaseFactory() async {
-  databaseFactory = databaseFactoryFfiWeb;
-}
+/// Web persistence is provided by LocalGameRepository, so there is no native
+/// database factory to configure on this platform.
+Future<void> initDatabaseFactory() async {}

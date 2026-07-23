@@ -4,15 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Frosted glass panel with a gradient border and soft outer glow.
-/// The ornate container style used across the app.
+/// Elevated product surface. Accent borders and glow are opt-in.
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(AppSpace.md),
     this.radius = AppRadii.lg,
-    this.borderGradient = AppGradients.aurora,
+    this.borderGradient = AppGradients.surfaceBorder,
     this.glowColor,
     this.blur = 14,
     this.onTap,
@@ -61,6 +60,16 @@ class GlassCard extends StatelessWidget {
     );
 
     if (onTap == null) return content;
-    return GestureDetector(onTap: onTap, child: content);
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radius),
+          child: content,
+        ),
+      ),
+    );
   }
 }

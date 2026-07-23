@@ -44,7 +44,7 @@ class _PianoMuseState extends State<PianoMuse>
       height: widget.size * (250 / 220),
       child: AnimatedBuilder(
         animation: _c,
-        builder: (_, __) => CustomPaint(
+        builder: (_, _) => CustomPaint(
           painter: PianoMusePainter(_c.value),
           size: Size.infinite,
         ),
@@ -161,8 +161,9 @@ class PianoMusePainter extends CustomPainter {
       ..quadraticBezierTo(172, 198, 180, 250)
       ..close();
     final paint = Paint()
-      ..shader = AppGradients.primary
-          .createShader(const Rect.fromLTWH(40, 188, 140, 62));
+      ..shader = AppGradients.primary.createShader(
+        const Rect.fromLTWH(40, 188, 140, 62),
+      );
     canvas.drawPath(body, paint);
 
     // collar V
@@ -182,7 +183,10 @@ class PianoMusePainter extends CustomPainter {
 
   void _face(Canvas canvas) {
     final faceRect = Rect.fromCenter(
-        center: const Offset(110, 112), width: 116, height: 132);
+      center: const Offset(110, 112),
+      width: 116,
+      height: 132,
+    );
     canvas.drawOval(faceRect, Paint()..color = _skin);
     // soft cheek/jaw shading
     canvas.drawOval(
@@ -277,21 +281,32 @@ class PianoMusePainter extends CustomPainter {
       );
       // iris
       canvas.save();
-      canvas.clipRRect(RRect.fromRectAndRadius(
-        Rect.fromCenter(center: e, width: 30, height: h),
-        const Radius.circular(16),
-      ));
+      canvas.clipRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: e, width: 30, height: h),
+          const Radius.circular(16),
+        ),
+      );
       canvas.drawCircle(e, 11, Paint()..color = AppColors.neonCyan);
-      canvas.drawCircle(e, 11,
-          Paint()..shader = const RadialGradient(colors: [
-            Color(0x000000FF),
-            Color(0x553D8BFF),
-          ]).createShader(Rect.fromCircle(center: e, radius: 11)));
+      canvas.drawCircle(
+        e,
+        11,
+        Paint()
+          ..shader = const RadialGradient(
+            colors: [Color(0x000000FF), Color(0x553D8BFF)],
+          ).createShader(Rect.fromCircle(center: e, radius: 11)),
+      );
       canvas.drawCircle(e, 6.2, Paint()..color = _dark);
-      canvas.drawCircle(Offset(e.dx - 3.5, e.dy - 4), 3.4,
-          Paint()..color = Colors.white.withValues(alpha: 0.95));
-      canvas.drawCircle(Offset(e.dx + 4, e.dy + 3), 1.7,
-          Paint()..color = Colors.white.withValues(alpha: 0.8));
+      canvas.drawCircle(
+        Offset(e.dx - 3.5, e.dy - 4),
+        3.4,
+        Paint()..color = Colors.white.withValues(alpha: 0.95),
+      );
+      canvas.drawCircle(
+        Offset(e.dx + 4, e.dy + 3),
+        1.7,
+        Paint()..color = Colors.white.withValues(alpha: 0.8),
+      );
       canvas.restore();
 
       // upper lash line
@@ -334,11 +349,13 @@ class PianoMusePainter extends CustomPainter {
     // blush
     final blush = Paint()..color = AppColors.neonPink.withValues(alpha: 0.35);
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(72, 150), width: 26, height: 14),
-        blush);
+      Rect.fromCenter(center: const Offset(72, 150), width: 26, height: 14),
+      blush,
+    );
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(148, 150), width: 26, height: 14),
-        blush);
+      Rect.fromCenter(center: const Offset(148, 150), width: 26, height: 14),
+      blush,
+    );
 
     // smile
     final mouth = Path()
@@ -383,8 +400,11 @@ class PianoMusePainter extends CustomPainter {
     // ear cups
     for (final cx in [44.0, 176.0]) {
       final center = Offset(cx, 122);
-      canvas.drawCircle(center, 24,
-          Paint()..color = AppColors.neonCyan.withValues(alpha: 0.25));
+      canvas.drawCircle(
+        center,
+        24,
+        Paint()..color = AppColors.neonCyan.withValues(alpha: 0.25),
+      );
       final cup = RRect.fromRectAndRadius(
         Rect.fromCenter(center: center, width: 34, height: 46),
         const Radius.circular(15),
@@ -393,29 +413,41 @@ class PianoMusePainter extends CustomPainter {
         cup,
         Paint()
           ..shader = AppGradients.cool.createShader(
-              Rect.fromCenter(center: center, width: 34, height: 46)),
+            Rect.fromCenter(center: center, width: 34, height: 46),
+          ),
       );
-      canvas.drawCircle(center, 8,
-          Paint()..color = Colors.white.withValues(alpha: 0.85));
-      canvas.drawCircle(center, 8,
-          Paint()
-            ..color = AppColors.neonBlue
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2);
+      canvas.drawCircle(
+        center,
+        8,
+        Paint()..color = Colors.white.withValues(alpha: 0.85),
+      );
+      canvas.drawCircle(
+        center,
+        8,
+        Paint()
+          ..color = AppColors.neonBlue
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
     }
   }
 
   void _pendant(Canvas canvas) {
     // little gold music-note charm at the collar
     const c = Offset(110, 222);
-    canvas.drawCircle(c, 9,
-        Paint()..shader = AppGradients.gold.createShader(
-            Rect.fromCircle(center: c, radius: 9)));
+    canvas.drawCircle(
+      c,
+      9,
+      Paint()
+        ..shader = AppGradients.gold.createShader(
+          Rect.fromCircle(center: c, radius: 9),
+        ),
+    );
     final note = Paint()..color = const Color(0xFF3A2A00);
     canvas.drawOval(
-        Rect.fromCenter(
-            center: const Offset(107, 225), width: 6, height: 4.5),
-        note);
+      Rect.fromCenter(center: const Offset(107, 225), width: 6, height: 4.5),
+      note,
+    );
     canvas.drawRect(const Rect.fromLTWH(109, 216, 2, 9), note);
   }
 
@@ -432,9 +464,10 @@ class PianoMusePainter extends CustomPainter {
       final paint = Paint()..color = color.withValues(alpha: alpha * 0.9);
       final head = Offset(base.dx, y);
       canvas.drawOval(
-          Rect.fromCenter(center: head, width: 9, height: 7), paint);
-      canvas.drawRect(
-          Rect.fromLTWH(head.dx + 3.5, y - 14, 2.2, 15), paint);
+        Rect.fromCenter(center: head, width: 9, height: 7),
+        paint,
+      );
+      canvas.drawRect(Rect.fromLTWH(head.dx + 3.5, y - 14, 2.2, 15), paint);
       canvas.drawPath(
         Path()
           ..moveTo(head.dx + 5.7, y - 14)
@@ -458,7 +491,8 @@ class PianoMusePainter extends CustomPainter {
     for (final (c, phase) in spots) {
       final tw = (math.sin((t + phase) * 2 * math.pi) * 0.5 + 0.5);
       final r = 4 + tw * 5;
-      final paint = Paint()..color = Colors.white.withValues(alpha: 0.4 + tw * 0.6);
+      final paint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.4 + tw * 0.6);
       final star = Path()
         ..moveTo(c.dx, c.dy - r)
         ..quadraticBezierTo(c.dx, c.dy, c.dx + r, c.dy)

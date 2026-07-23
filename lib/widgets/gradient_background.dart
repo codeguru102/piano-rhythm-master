@@ -10,7 +10,7 @@ class GradientBackground extends StatefulWidget {
   const GradientBackground({
     super.key,
     required this.child,
-    this.particleCount = 22,
+    this.particleCount = 12,
   });
 
   final Widget child;
@@ -36,8 +36,10 @@ class _GradientBackgroundState extends State<GradientBackground>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 16))
-      ..repeat();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 16),
+    )..repeat();
     final rnd = math.Random(7);
     _particles = List.generate(widget.particleCount, (i) {
       return _Particle(
@@ -58,6 +60,19 @@ class _GradientBackgroundState extends State<GradientBackground>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      _ctrl.stop();
+      _ctrl.value = 0.2;
+    } else if (!_ctrl.isAnimating) {
+      _ctrl.repeat();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(gradient: AppGradients.stage),
@@ -68,17 +83,23 @@ class _GradientBackgroundState extends State<GradientBackground>
           return Stack(
             children: [
               _blob(
-                AppColors.neonPurple.withValues(alpha: 0.22),
+                AppColors.neonPurple.withValues(alpha: 0.14),
                 260,
-                Alignment(-0.8 + 0.25 * math.sin(t), -0.75 + 0.18 * math.cos(t)),
+                Alignment(
+                  -0.8 + 0.25 * math.sin(t),
+                  -0.75 + 0.18 * math.cos(t),
+                ),
               ),
               _blob(
-                AppColors.neonBlue.withValues(alpha: 0.18),
+                AppColors.neonBlue.withValues(alpha: 0.12),
                 320,
-                Alignment(0.85 + 0.2 * math.cos(t * 0.8), 0.8 + 0.16 * math.sin(t)),
+                Alignment(
+                  0.85 + 0.2 * math.cos(t * 0.8),
+                  0.8 + 0.16 * math.sin(t),
+                ),
               ),
               _blob(
-                AppColors.neonPink.withValues(alpha: 0.14),
+                AppColors.neonPink.withValues(alpha: 0.09),
                 240,
                 Alignment(0.2 * math.sin(t * 1.3), 0.1 * math.cos(t)),
               ),
@@ -106,7 +127,9 @@ class _GradientBackgroundState extends State<GradientBackground>
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: color, blurRadius: 170, spreadRadius: 50)],
+            boxShadow: [
+              BoxShadow(color: color, blurRadius: 170, spreadRadius: 50),
+            ],
           ),
         ),
       ),

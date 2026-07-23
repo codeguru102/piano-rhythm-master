@@ -10,10 +10,18 @@ import 'package:flutter/material.dart';
 /// caused jank on software GPUs). Glow is faked with layered translucent
 /// circles. Calls [onDone] when finished so the host can remove it.
 class Fireworks extends StatefulWidget {
-  const Fireworks({super.key, required this.color, required this.onDone});
+  const Fireworks({
+    super.key,
+    required this.color,
+    required this.onDone,
+    this.intensity = 1,
+    this.isMiss = false,
+  });
 
   final Color color;
   final VoidCallback onDone;
+  final double intensity;
+  final bool isMiss;
 
   @override
   State<Fireworks> createState() => _FireworksState();
@@ -26,12 +34,15 @@ class _FireworksState extends State<Fireworks>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 640))
-      ..forward()
-      ..addStatusListener((s) {
-        if (s == AnimationStatus.completed) widget.onDone();
-      });
+    _c =
+        AnimationController(
+            vsync: this,
+            duration: const Duration(milliseconds: 880),
+          )
+          ..forward()
+          ..addStatusListener((s) {
+            if (s == AnimationStatus.completed) widget.onDone();
+          });
   }
 
   @override
@@ -48,8 +59,14 @@ class _FireworksState extends State<Fireworks>
       child: IgnorePointer(
         child: AnimatedBuilder(
           animation: _c,
-          builder: (context, _) =>
-              CustomPaint(painter: _FireworksPainter(_c.value, widget.color)),
+          builder: (context, _) => CustomPaint(
+            painter: _FireworksPainter(
+              _c.value,
+              widget.color,
+              widget.intensity,
+              widget.isMiss,
+            ),
+          ),
         ),
       ),
     );
@@ -57,10 +74,12 @@ class _FireworksState extends State<Fireworks>
 }
 
 class _FireworksPainter extends CustomPainter {
-  _FireworksPainter(this.t, this.color);
+  _FireworksPainter(this.t, this.color, this.intensity, this.isMiss);
 
   final double t;
   final Color color;
+  final double intensity;
+  final bool isMiss;
 
   static const _gold = Color(0xFFFFD76B);
   static const _pink = Color(0xFFFF4D9D);
@@ -78,16 +97,55 @@ class _FireworksPainter extends CustomPainter {
 
     final eo = 1 - math.pow(1 - t, 1.9).toDouble();
     final fade = math.pow(1 - t, 1.3).toDouble().clamp(0.0, 1.0);
-    final gravity = maxR * 0.8 * t * t;
-    final palette = [Colors.white, color, _gold, _pink, _cyan];
+    final gravity = maxR * (isMiss ? 1.2 : 0.8) * t * t;
+    final palette = isMiss
+        ? [
+            Colors.white,
+            color,
+            const Color(0xFFFF6B86),
+            const Color(0xFFFFA35C),
+          ]
+        : [Colors.white, color, _gold, _pink, _cyan];
     final add = BlendMode.plus;
+
+    // 0) an instantaneous radial starburst makes every press feel physical.
+    final rayFade = (1 - (t / 0.58).clamp(0.0, 1.0)) * intensity;
+    if (rayFade > 0) {
+      for (var ray = 0; ray < 16; ray++) {
+        final a = ray / 16 * math.pi * 2 + 0.12;
+        final dir = Offset(math.cos(a), math.sin(a));
+        final inner = maxR * (0.08 + 0.06 * eo);
+        final outer = maxR * (0.42 + 0.5 * eo) * (0.82 + _r(ray, 12) * 0.2);
+        canvas.drawLine(
+          c + dir * inner,
+          c + dir * outer,
+          Paint()
+            ..color = palette[ray % palette.length].withValues(
+              alpha: 0.3 * rayFade,
+            )
+            ..strokeWidth = (ray.isEven ? 3.4 : 1.5) * (1 - t)
+            ..strokeCap = StrokeCap.round
+            ..blendMode = add,
+        );
+      }
+    }
 
     // 1) soft bloom — two layered translucent circles (cheap, no blur)
     final bloomR = maxR * (0.30 + 0.5 * eo);
-    canvas.drawCircle(c, bloomR,
-        Paint()..color = color.withValues(alpha: 0.14 * fade)..blendMode = add);
-    canvas.drawCircle(c, bloomR * 0.6,
-        Paint()..color = color.withValues(alpha: 0.18 * fade)..blendMode = add);
+    canvas.drawCircle(
+      c,
+      bloomR,
+      Paint()
+        ..color = color.withValues(alpha: 0.14 * fade)
+        ..blendMode = add,
+    );
+    canvas.drawCircle(
+      c,
+      bloomR * 0.6,
+      Paint()
+        ..color = color.withValues(alpha: 0.18 * fade)
+        ..blendMode = add,
+    );
 
     // 2) twin shockwave rings (solid strokes)
     for (var k = 0; k < 2; k++) {
@@ -100,7 +158,32 @@ class _FireworksPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = (k == 0 ? 3.5 : 2) * rFade
-          ..color = (k == 0 ? Colors.white : color).withValues(alpha: 0.7 * rFade)
+          ..color = (k == 0 ? Colors.white : color).withValues(
+            alpha: 0.7 * rFade,
+          )
+          ..blendMode = add,
+      );
+    }
+
+    // 2b) opposing energy arcs add a premium, musical spin to the shockwave.
+    for (var arc = 0; arc < 3; arc++) {
+      final arcT = (t / (0.62 + arc * 0.08)).clamp(0.0, 1.0);
+      final arcFade = (1 - arcT) * intensity;
+      if (arcFade <= 0) continue;
+      final radius = maxR * (0.18 + 0.72 * arcT) * (0.82 + arc * 0.09);
+      final rect = Rect.fromCircle(center: c, radius: radius);
+      canvas.drawArc(
+        rect,
+        arc * 1.9 + t * (arc.isEven ? 4.5 : -4.5),
+        math.pi * (0.42 + arc * 0.08),
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = (5 - arc) * arcFade
+          ..color = palette[(arc + 1) % palette.length].withValues(
+            alpha: 0.7 * arcFade,
+          )
           ..blendMode = add,
       );
     }
@@ -108,8 +191,11 @@ class _FireworksPainter extends CustomPainter {
     // 3) tile shards flying out (the tile breaking apart)
     const shards = 7;
     final shardFill = Paint()
-      ..color = Color.lerp(color, const Color(0xFF0B0917), 0.5)!
-          .withValues(alpha: fade);
+      ..color = Color.lerp(
+        color,
+        const Color(0xFF0B0917),
+        0.5,
+      )!.withValues(alpha: fade);
     final shardEdge = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
@@ -123,16 +209,20 @@ class _FireworksPainter extends CustomPainter {
       canvas.translate(pos.dx, pos.dy);
       canvas.rotate(a + t * 5);
       final rect = RRect.fromRectAndRadius(
-          Rect.fromCenter(
-              center: Offset.zero, width: 15 * fade, height: 10 * fade),
-          const Radius.circular(3));
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: 15 * fade,
+          height: 10 * fade,
+        ),
+        const Radius.circular(3),
+      );
       canvas.drawRRect(rect, shardFill);
       canvas.drawRRect(rect, shardEdge);
       canvas.restore();
     }
 
     // 4) sparks: a tapered trail + a layered glow head (all solid, additive)
-    const sparks = 22;
+    final sparks = (22 * intensity).round().clamp(18, 32);
     for (var i = 0; i < sparks; i++) {
       final a = (i / sparks) * 2 * math.pi + (_r(i, 2) - 0.5) * 0.4;
       final dir = Offset(math.cos(a), math.sin(a));
@@ -153,25 +243,53 @@ class _FireworksPainter extends CustomPainter {
           ..blendMode = add,
       );
       // layered glow head (outer faint -> inner bright), no blur
-      canvas.drawCircle(pos, headR * 2.1,
-          Paint()..color = col.withValues(alpha: 0.16 * alpha)..blendMode = add);
-      canvas.drawCircle(pos, headR * 1.3,
-          Paint()..color = col.withValues(alpha: 0.4 * alpha)..blendMode = add);
-      canvas.drawCircle(pos, headR,
-          Paint()..color = col.withValues(alpha: alpha)..blendMode = add);
+      canvas.drawCircle(
+        pos,
+        headR * 2.1,
+        Paint()
+          ..color = col.withValues(alpha: 0.16 * alpha)
+          ..blendMode = add,
+      );
+      canvas.drawCircle(
+        pos,
+        headR * 1.3,
+        Paint()
+          ..color = col.withValues(alpha: 0.4 * alpha)
+          ..blendMode = add,
+      );
+      canvas.drawCircle(
+        pos,
+        headR,
+        Paint()
+          ..color = col.withValues(alpha: alpha)
+          ..blendMode = add,
+      );
       if (i.isEven) {
-        canvas.drawCircle(pos, headR * 0.5,
-            Paint()..color = Colors.white.withValues(alpha: alpha));
+        canvas.drawCircle(
+          pos,
+          headR * 0.5,
+          Paint()..color = Colors.white.withValues(alpha: alpha),
+        );
       }
     }
 
     // 5) white-hot core flash (layered solid circles)
     final flash = (1 - t * 3).clamp(0.0, 1.0);
     if (flash > 0) {
-      canvas.drawCircle(c, maxR * 0.34 * flash + 6,
-          Paint()..color = color.withValues(alpha: 0.5 * flash)..blendMode = add);
-      canvas.drawCircle(c, maxR * 0.2 * flash + 3,
-          Paint()..color = Colors.white.withValues(alpha: 0.95 * flash)..blendMode = add);
+      canvas.drawCircle(
+        c,
+        maxR * 0.34 * flash + 6,
+        Paint()
+          ..color = color.withValues(alpha: 0.5 * flash)
+          ..blendMode = add,
+      );
+      canvas.drawCircle(
+        c,
+        maxR * 0.2 * flash + 3,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.95 * flash)
+          ..blendMode = add,
+      );
     }
 
     // 6) a few sparkle stars for shimmer (solid paths)
@@ -185,10 +303,11 @@ class _FireworksPainter extends CustomPainter {
       if (tw <= 0.06) continue;
       final rr = 3.0 + tw * 4;
       canvas.drawPath(
-          _star4(p, rr),
-          Paint()
-            ..color = Colors.white.withValues(alpha: tw)
-            ..blendMode = add);
+        _star4(p, rr),
+        Paint()
+          ..color = Colors.white.withValues(alpha: tw)
+          ..blendMode = add,
+      );
     }
   }
 
@@ -201,5 +320,9 @@ class _FireworksPainter extends CustomPainter {
     ..close();
 
   @override
-  bool shouldRepaint(_FireworksPainter old) => old.t != t;
+  bool shouldRepaint(_FireworksPainter old) =>
+      old.t != t ||
+      old.color != color ||
+      old.intensity != intensity ||
+      old.isMiss != isMiss;
 }
